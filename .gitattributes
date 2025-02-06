@@ -1,0 +1,5 @@
+# Saving Terraform files to LF
+*.tf text eol=lf
+*.tfvars text eol=lf
+*.hcl text eol=lf
+.terraform.lock.hcl text eol=lf

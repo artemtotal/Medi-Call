@@ -1,0 +1,153 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # ================= 1) BUILD & PUSH DOCKER IMAGE TO DOCKER HUB =================
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js application
+        run: npm run build
+
+      #  Docker image build and push
+      - name: Log in to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+      
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/my-nextjs-app:${{ github.sha }} \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/my-nextjs-app:latest \
+            .
+      
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/my-nextjs-app:${{ github.sha }}
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/my-nextjs-app:latest
+
+  # ================= 2) TERRAFORM INFRASTRUCTURE =================
+  terraform_infra:
+    runs-on: ubuntu-latest
+    needs: [build]  # First we wait for the image to assemble
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: '1.10.5'
+
+      - name: Terraform Init
+        working-directory: infra
+        run: terraform init
+
+      - name: Terraform Plan
+        working-directory: infra
+        run: terraform plan -out=plan.tfplan
+
+      - name: Terraform Apply
+        working-directory: infra
+        run: terraform apply -auto-approve plan.tfplan
+
+      - name: Terraform Output (JSON)
+        id: tf_output
+        working-directory: infra
+        run: terraform output -json > tf_outputs.json
+
+      - name: Upload TF outputs
+    # Save tf_outputs.json as an artifact,
+        # to use in the next job (ansible_config).
+        uses: actions/upload-artifact@v3
+        with:
+          name: tf_outputs
+          path: infra/tf_outputs.json
+
+  # ================= 3) ANSIBLE CONFIGURATION =================
+  ansible_config:
+    runs-on: ubuntu-latest
+    needs: [terraform_infra]
+
+    steps:
+      - name: Download TF outputs
+        uses: actions/download-artifact@v3
+        with:
+          name: tf_outputs
+          path: ./  # Download to the root of the workspace
+
+      - name: Show tf_outputs.json (debug)
+        run: cat tf_outputs.json
+
+      - name: Parse and create inventory
+        id: create_inventory
+        shell: bash
+        run: |
+          # Assume we have output “public_ips” (array of IPs) in Terraform
+          # Example:
+          # output “public_ips” {
+          # value = data.aws_instances.asg_instances.public_ips
+          # }
+          # Or manually output the IPs in “public_ips”
+          # 
+          # Extract the IP list into a bash array
+          
+          PUBLIC_IPS=$(jq -r '.public_ips.value[]' tf_outputs.json)
+          echo "Found IPs:"
+          echo "$PUBLIC_IPS"
+          
+          # Let's generate the inventory.ini file
+          echo "[ec2]" > inventory.ini
+          for IP in $PUBLIC_IPS; do
+            echo "${IP} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/id_rsa" >> inventory.ini
+          done
+
+          echo "" >> inventory.ini
+          echo "[ec2:vars]" >> inventory.ini
+          echo "ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> inventory.ini
+          
+          echo "==============================="
+          cat inventory.ini
+
+      - name: Install Ansible
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ansible
+
+      - name: Prepare SSH Key
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.MY_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Run Ansible Playbook
+        shell: bash
+        run: |
+          ansible-playbook -i inventory.ini ansible/playbook.yml
+

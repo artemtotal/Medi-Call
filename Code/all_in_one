@@ -1,0 +1,3513 @@
+stream.actions 
+
+'use server';
+
+import { currentUser } from '@clerk/nextjs/server';
+import { StreamClient } from '@stream-io/node-sdk';
+
+const STREAM_API_KEY = process.env.NEXT_PUBLIC_STREAM_API_KEY;
+const STREAM_API_SECRET = process.env.STREAM_SECRET_KEY;
+
+export const tokenProvider = async () => {
+  const user = await currentUser();
+
+  if (!user) throw new Error('User is not authenticated');
+  if (!STREAM_API_KEY) throw new Error('Stream API key secret is missing');
+  if (!STREAM_API_SECRET) throw new Error('Stream API secret is missing');
+
+  const streamClient = new StreamClient(STREAM_API_KEY, STREAM_API_SECRET);
+
+  const expirationTime = Math.floor(Date.now() / 1000) + 3600;
+  const issuedAt = Math.floor(Date.now() / 1000) - 60;
+
+  const token = streamClient.createToken(user.id, expirationTime, issuedAt);
+
+  return token;
+};
+
+
+sign in 
+
+import { SignIn } from '@clerk/nextjs';
+
+export default function SiginInPage() {
+  return (
+    <main className="flex h-screen w-full items-center justify-center">
+      <SignIn />
+    </main>
+  );
+}
+ sign up 
+
+ import { SignUp } from '@clerk/nextjs';
+
+export default function SignUpPage() {
+  return (
+    <main className="flex h-screen w-full items-center justify-center">
+      <SignUp />
+    </main>
+  );
+}
+
+zoom-clone\app\(root)\(home)\personal-room\page.tsx
+
+"use client";
+
+import { useUser } from "@clerk/nextjs";
+import { useStreamVideoClient } from "@stream-io/video-react-sdk";
+import { useRouter } from "next/navigation";
+
+import { useGetCallById } from "@/hooks/useGetCallById";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+
+const Table = ({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) => {
+  return (
+    <div className="flex flex-col items-start gap-2 xl:flex-row">
+      <h1 className="text-base font-medium text-sky-1 lg:text-xl xl:min-w-32">
+        {title}:
+      </h1>
+      <h1 className="truncate text-sm font-bold max-sm:max-w-[320px] lg:text-xl">
+        {description}
+      </h1>
+    </div>
+  );
+};
+
+const PersonalRoom = () => {
+  const router = useRouter();
+  const { user } = useUser();
+  const client = useStreamVideoClient();
+  const { toast } = useToast();
+
+  const meetingId = user?.id;
+
+  const { call } = useGetCallById(meetingId!);
+
+  const startRoom = async () => {
+    if (!client || !user) return;
+
+    const newCall = client.call("default", meetingId!);
+
+    if (!call) {
+      await newCall.getOrCreate({
+        data: {
+          starts_at: new Date().toISOString(),
+        },
+      });
+    }
+
+    router.push(`/meeting/${meetingId}?personal=true`);
+  };
+
+  const meetingLink = `${process.env.NEXT_PUBLIC_BASE_URL}/meeting/${meetingId}?personal=true`;
+
+  return (
+    <section className="flex size-full flex-col gap-10 text-white">
+      <h1 className="text-xl font-bold lg:text-3xl">Personal Meeting Room</h1>
+      <div className="flex w-full flex-col gap-8 xl:max-w-[900px]">
+        <Table title="Topic" description={`${user?.username}'s Meeting Room`} />
+        <Table title="Meeting ID" description={meetingId!} />
+        <Table title="Invite Link" description={meetingLink} />
+      </div>
+      <div className="flex gap-5">
+        <Button className="bg-blue-1" onClick={startRoom}>
+          Start Meeting
+        </Button>
+        <Button
+          className="bg-dark-3"
+          onClick={() => {
+            navigator.clipboard.writeText(meetingLink);
+            toast({
+              title: "Link Copied",
+            });
+          }}
+        >
+          Copy Invitation
+        </Button>
+      </div>
+    </section>
+  );
+};
+
+export default PersonalRoom;
+
+
+zoom-clone\app\(root)\(home)\previous\page.tsx
+
+"use client";
+
+import { useUser } from "@clerk/nextjs";
+import { useStreamVideoClient } from "@stream-io/video-react-sdk";
+import { useRouter } from "next/navigation";
+
+import { useGetCallById } from "@/hooks/useGetCallById";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+
+const Table = ({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) => {
+  return (
+    <div className="flex flex-col items-start gap-2 xl:flex-row">
+      <h1 className="text-base font-medium text-sky-1 lg:text-xl xl:min-w-32">
+        {title}:
+      </h1>
+      <h1 className="truncate text-sm font-bold max-sm:max-w-[320px] lg:text-xl">
+        {description}
+      </h1>
+    </div>
+  );
+};
+
+const PersonalRoom = () => {
+  const router = useRouter();
+  const { user } = useUser();
+  const client = useStreamVideoClient();
+  const { toast } = useToast();
+
+  const meetingId = user?.id;
+
+  const { call } = useGetCallById(meetingId!);
+
+  const startRoom = async () => {
+    if (!client || !user) return;
+
+    const newCall = client.call("default", meetingId!);
+
+    if (!call) {
+      await newCall.getOrCreate({
+        data: {
+          starts_at: new Date().toISOString(),
+        },
+      });
+    }
+
+    router.push(`/meeting/${meetingId}?personal=true`);
+  };
+
+  const meetingLink = `${process.env.NEXT_PUBLIC_BASE_URL}/meeting/${meetingId}?personal=true`;
+
+  return (
+    <section className="flex size-full flex-col gap-10 text-white">
+      <h1 className="text-xl font-bold lg:text-3xl">Personal Meeting Room</h1>
+      <div className="flex w-full flex-col gap-8 xl:max-w-[900px]">
+        <Table title="Topic" description={`${user?.username}'s Meeting Room`} />
+        <Table title="Meeting ID" description={meetingId!} />
+        <Table title="Invite Link" description={meetingLink} />
+      </div>
+      <div className="flex gap-5">
+        <Button className="bg-blue-1" onClick={startRoom}>
+          Start Meeting
+        </Button>
+        <Button
+          className="bg-dark-3"
+          onClick={() => {
+            navigator.clipboard.writeText(meetingLink);
+            toast({
+              title: "Link Copied",
+            });
+          }}
+        >
+          Copy Invitation
+        </Button>
+      </div>
+    </section>
+  );
+};
+
+export default PersonalRoom;
+
+zoom-clone\app\(root)\(home)\recordings
+
+import CallList from '@/components/CallList';
+
+const PreviousPage = () => {
+  return (
+    <section className="flex size-full flex-col gap-10 text-white">
+      <h1 className="text-3xl font-bold">Recordings</h1>
+
+      <CallList type="recordings" />
+    </section>
+  );
+};
+
+export default PreviousPage;
+
+zoom-clone\app\(root)\(home)\upcoming\page.tsx
+
+import CallList from '@/components/CallList';
+
+const UpcomingPage = () => {
+  return (
+    <section className="flex size-full flex-col gap-10 text-white">
+      <h1 className="text-3xl font-bold">Upcoming Meeting</h1>
+
+      <CallList type="upcoming" />
+    </section>
+  );
+};
+
+export default UpcomingPage;
+
+zoom-clone\app\(root)\(home)\layout.tsx
+
+import { Metadata } from 'next';
+import { ReactNode } from 'react';
+
+import Navbar from '@/components/Navbar';
+import Sidebar from '@/components/Sidebar';
+
+export const metadata: Metadata = {
+  title: 'C-A',
+  description: 'A workspace for your team, powered by Stream Chat and Clerk.',
+};
+
+const RootLayout = ({ children }: Readonly<{children: ReactNode}>) => {
+  return (
+    <main className="relative">
+      <Navbar />
+
+      <div className="flex">
+        <Sidebar />
+        
+        <section className="flex min-h-screen flex-1 flex-col px-6 pb-6 pt-28 max-md:pb-14 sm:px-14">
+          <div className="w-full">{children}</div>
+        </section>
+      </div>
+    </main>
+  );
+};
+
+export default RootLayout;
+
+
+zoom-clone\app\(root)\(home)\page.tsx
+
+import MeetingTypeList from '@/components/MeetingTypeList';
+
+const Home = () => {
+  const now = new Date();
+
+  const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  const date = (new Intl.DateTimeFormat('en-US', { dateStyle: 'full' })).format(now);
+
+  return (
+    <section className="flex size-full flex-col gap-5 text-white">
+      <div className="h-[303px] w-full rounded-[20px] bg-hero bg-cover">
+        <div className="flex h-full flex-col justify-between max-md:px-5 max-md:py-8 lg:p-11">
+          <h2 className="glassmorphism max-w-[273px] rounded py-2 text-center text-base font-normal">
+            Upcoming Meeting at: 12:30 PM
+          </h2>
+          <div className="flex flex-col gap-2">
+            <h1 className="text-4xl font-extrabold lg:text-7xl">{time}</h1>
+            <p className="text-lg font-medium text-sky-1 lg:text-2xl">{date}</p>
+          </div>
+        </div>
+      </div>
+
+      <MeetingTypeList />
+    </section>
+  );
+};
+
+export default Home;
+
+zoom-clone\app\(root)\meeting\[id]\page.tsx
+
+'use client';
+
+import { useState } from 'react';
+import { useUser } from '@clerk/nextjs';
+import { StreamCall, StreamTheme } from '@stream-io/video-react-sdk';
+import { useParams } from 'next/navigation';
+import { Loader } from 'lucide-react';
+
+import { useGetCallById } from '@/hooks/useGetCallById';
+import Alert from '@/components/Alert';
+import MeetingSetup from '@/components/MeetingSetup';
+import MeetingRoom from '@/components/MeetingRoom';
+
+const MeetingPage = () => {
+  const { id } = useParams();
+  const { isLoaded, user } = useUser();
+  const { call, isCallLoading } = useGetCallById(id);
+  const [isSetupComplete, setIsSetupComplete] = useState(false);
+
+  if (!isLoaded || isCallLoading) return <Loader />;
+
+  if (!call) return (
+    <p className="text-center text-3xl font-bold text-white">
+      Call Not Found
+    </p>
+  );
+
+  // get more info about custom call type:  https://getstream.io/video/docs/react/guides/configuring-call-types/
+  const notAllowed = call.type === 'invited' && (!user || !call.state.members.find((m) => m.user.id === user.id));
+
+  if (notAllowed) return <Alert title="You are not allowed to join this meeting" />;
+
+  return (
+    <main className="h-screen w-full">
+      <StreamCall call={call}>
+        <StreamTheme>
+
+        {!isSetupComplete ? (
+          <MeetingSetup setIsSetupComplete={setIsSetupComplete} />
+        ) : (
+          <MeetingRoom />
+        )}
+        </StreamTheme>
+      </StreamCall>
+    </main>
+  );
+};
+
+export default MeetingPage;
+
+
+zoom-clone\app\(root)\layout.tsx
+
+import { ReactNode } from 'react';
+
+import StreamVideoProvider from '@/providers/StreamClientProvider';
+
+const RootLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
+  return (
+    <main>
+      <StreamVideoProvider>{children}</StreamVideoProvider>
+    </main>
+  );
+};
+
+export default RootLayout;
+
+
+zoom-clone\app\globals.css
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ======== stream css overrides ======== */
+.str-video__call-stats {
+  max-width: 500px;
+  position: relative;
+}
+
+.str-video__speaker-layout__wrapper {
+  max-height: 700px;
+}
+
+.str-video__participant-details {
+  color: white;
+}
+
+.str-video__menu-container {
+  color: white;
+}
+
+.str-video__notification {
+  color: white;
+}
+
+.str-video__participant-list {
+  background-color: #1c1f2e;
+  padding: 10px;
+  border-radius: 10px;
+  color: white;
+  height: 100%;
+}
+
+.str-video__call-controls__button {
+  height: 40px;
+}
+
+.glassmorphism {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.glassmorphism2 {
+  background: rgba(18, 17, 17, 0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ==== clerk class override ===== */
+
+.cl-userButtonPopoverActionButtonIcon {
+  color: white;
+}
+
+.cl-logoBox {
+  height: 40px;
+}
+.cl-dividerLine {
+  background: #252a41;
+  height: 2px;
+}
+
+.cl-socialButtonsIconButton {
+  border: 3px solid #565761;
+}
+
+.cl-internal-wkkub3 {
+  color: white;
+}
+.cl-userButtonPopoverActionButton {
+  color: white;
+}
+
+/* =============================== */
+
+@layer utilities {
+  .flex-center {
+    @apply flex justify-center items-center;
+  }
+
+  .flex-between {
+    @apply flex justify-between items-center;
+  }
+}
+
+/* animation */
+
+.show-block {
+  width: 100%;
+  max-width: 350px;
+  display: block;
+  animation: show 0.7s forwards linear;
+}
+
+@keyframes show {
+  0% {
+    animation-timing-function: ease-in;
+    width: 0%;
+  }
+
+  100% {
+    animation-timing-function: ease-in;
+    width: 100%;
+  }
+}
+zoom-clone\app\layout.tsx
+
+import { ReactNode } from "react";
+import type { Metadata } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
+import { Inter } from "next/font/google";
+
+import "@stream-io/video-react-sdk/dist/css/styles.css";
+import "react-datepicker/dist/react-datepicker.css";
+import "./globals.css";
+import { Toaster } from "@/components/ui/toaster";
+
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "C-A",
+  description: "Video calling App",
+  icons: {
+    icon: "/icons/logo.svg",
+  },
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{ children: ReactNode }>) {
+  return (
+    <html lang="en">
+      <ClerkProvider
+        appearance={{
+          layout: {
+            socialButtonsVariant: "iconButton",
+            logoImageUrl: "/icons/C-A-logo.svg",
+          },
+          variables: {
+            colorText: "#fff",
+            colorPrimary: "#0E78F9",
+            colorBackground: "#1C1F2E",
+            colorInputBackground: "#252A41",
+            colorInputText: "#fff",
+          },
+        }}
+      >
+        <body className={`${inter.className} bg-dark-2`}>
+          <Toaster />
+          {children}
+        </body>
+      </ClerkProvider>
+    </html>
+  );
+}
+
+zoom-clone\components\ui\button.tsx
+
+import * as React from 'react';
+import { Slot } from '@radix-ui/react-slot';
+import { cva, type VariantProps } from 'class-variance-authority';
+
+import { cn } from '@/lib/utils';
+
+const buttonVariants = cva(
+  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-white transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-slate-950 dark:focus-visible:ring-slate-300',
+  {
+    variants: {
+      variant: {
+        default:
+          'bg-slate-900 text-slate-50 hover:bg-slate-800/90 dark:bg-slate-50 dark:text-slate-900 dark:hover:bg-slate-50/90',
+        destructive:
+          'bg-red-500 text-slate-50 hover:bg-red-500/90 dark:bg-red-900 dark:text-slate-50 dark:hover:bg-red-900/90',
+        outline:
+          'border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-800 dark:hover:text-slate-50',
+        secondary:
+          'bg-slate-100 text-slate-900 hover:bg-slate-100/80 dark:bg-slate-800 dark:text-slate-50 dark:hover:bg-slate-800/80',
+        ghost:
+          'hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-50',
+        link: 'text-slate-900 underline-offset-4 hover:underline dark:text-slate-50',
+      },
+      size: {
+        default: 'h-10 px-4 py-2',
+        sm: 'h-9 rounded-md px-3',
+        lg: 'h-11 rounded-md px-8',
+        icon: 'size-10',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default',
+    },
+  }
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : 'button';
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    );
+  }
+);
+Button.displayName = 'Button';
+
+export { Button, buttonVariants };
+
+
+
+zoom-clone\components\ui\card.tsx
+
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+const Card = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "rounded-lg border border-slate-200 bg-white text-slate-950 shadow-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50",
+      className
+    )}
+    {...props}
+  />
+))
+Card.displayName = "Card"
+
+const CardHeader = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex flex-col space-y-1.5 p-6", className)}
+    {...props}
+  />
+))
+CardHeader.displayName = "CardHeader"
+
+const CardTitle = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLHeadingElement>
+>(({ className, ...props }, ref) => (
+  <h3
+    ref={ref}
+    className={cn(
+      "text-2xl font-semibold leading-none tracking-tight",
+      className
+    )}
+    {...props}
+  />
+))
+CardTitle.displayName = "CardTitle"
+
+const CardDescription = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(({ className, ...props }, ref) => (
+  <p
+    ref={ref}
+    className={cn("text-sm text-slate-500 dark:text-slate-400", className)}
+    {...props}
+  />
+))
+CardDescription.displayName = "CardDescription"
+
+const CardContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+))
+CardContent.displayName = "CardContent"
+
+const CardFooter = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex items-center p-6 pt-0", className)}
+    {...props}
+  />
+))
+CardFooter.displayName = "CardFooter"
+
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
+
+
+zoom-clone\components\ui\dialog.tsx
+
+'use client';
+
+import * as React from 'react';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { X } from 'lucide-react';
+
+import { cn } from '@/lib/utils';
+
+const Dialog = DialogPrimitive.Root;
+
+const DialogTrigger = DialogPrimitive.Trigger;
+
+const DialogPortal = DialogPrimitive.Portal;
+
+const DialogClose = DialogPrimitive.Close;
+
+const DialogOverlay = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Overlay>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Overlay
+    ref={ref}
+    className={cn(
+      'fixed glassmorphism2 inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+      className
+    )}
+    {...props}
+  />
+));
+DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
+
+const DialogContent = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
+>(({ className, children, ...props }, ref) => (
+  <DialogPortal>
+    <DialogOverlay />
+    <DialogPrimitive.Content
+      ref={ref}
+      className={cn(
+        'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-slate-200 bg-white p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-2xl dark:border-slate-800 dark:bg-slate-950',
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-slate-100 data-[state=open]:text-slate-500 dark:ring-offset-slate-950 dark:focus:ring-slate-300 dark:data-[state=open]:bg-slate-800 dark:data-[state=open]:text-slate-400">
+        <X className="size-6" />
+        <span className="sr-only">Close</span>
+      </DialogPrimitive.Close>
+    </DialogPrimitive.Content>
+  </DialogPortal>
+));
+DialogContent.displayName = DialogPrimitive.Content.displayName;
+
+const DialogHeader = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      'flex flex-col space-y-1.5 text-center sm:text-left',
+      className
+    )}
+    {...props}
+  />
+);
+DialogHeader.displayName = 'DialogHeader';
+
+const DialogFooter = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      'flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2',
+      className
+    )}
+    {...props}
+  />
+);
+DialogFooter.displayName = 'DialogFooter';
+
+const DialogTitle = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Title>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Title
+    ref={ref}
+    className={cn(
+      'text-lg font-semibold leading-none tracking-tight',
+      className
+    )}
+    {...props}
+  />
+));
+DialogTitle.displayName = DialogPrimitive.Title.displayName;
+
+const DialogDescription = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Description>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Description
+    ref={ref}
+    className={cn('text-sm text-slate-500 dark:text-slate-400', className)}
+    {...props}
+  />
+));
+DialogDescription.displayName = DialogPrimitive.Description.displayName;
+
+export {
+  Dialog,
+  DialogPortal,
+  DialogOverlay,
+  DialogClose,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+};
+
+
+zoom-clone\components\ui\dropdown-menu.tsx
+
+'use client';
+
+import * as React from 'react';
+import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
+import { Check, ChevronRight, Circle } from 'lucide-react';
+
+import { cn } from '@/lib/utils';
+
+const DropdownMenu = DropdownMenuPrimitive.Root;
+
+const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
+
+const DropdownMenuGroup = DropdownMenuPrimitive.Group;
+
+const DropdownMenuPortal = DropdownMenuPrimitive.Portal;
+
+const DropdownMenuSub = DropdownMenuPrimitive.Sub;
+
+const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
+
+const DropdownMenuSubTrigger = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.SubTrigger>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubTrigger> & {
+    inset?: boolean;
+  }
+>(({ className, inset, children, ...props }, ref) => (
+  <DropdownMenuPrimitive.SubTrigger
+    ref={ref}
+    className={cn(
+      'flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-slate-100 data-[state=open]:bg-slate-100 dark:focus:bg-slate-800 dark:data-[state=open]:bg-slate-800',
+      inset && 'pl-8',
+      className
+    )}
+    {...props}
+  >
+    {children}
+    <ChevronRight className="ml-auto size-4" />
+  </DropdownMenuPrimitive.SubTrigger>
+));
+DropdownMenuSubTrigger.displayName =
+  DropdownMenuPrimitive.SubTrigger.displayName;
+
+const DropdownMenuSubContent = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.SubContent>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubContent>
+>(({ className, ...props }, ref) => (
+  <DropdownMenuPrimitive.SubContent
+    ref={ref}
+    className={cn(
+      'z-50 min-w-[8rem] overflow-hidden rounded-md border border-slate-200 bg-white p-1 text-slate-950 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50',
+      className
+    )}
+    {...props}
+  />
+));
+DropdownMenuSubContent.displayName =
+  DropdownMenuPrimitive.SubContent.displayName;
+
+const DropdownMenuContent = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
+>(({ className, sideOffset = 4, ...props }, ref) => (
+  <DropdownMenuPrimitive.Portal>
+    <DropdownMenuPrimitive.Content
+      ref={ref}
+      sideOffset={sideOffset}
+      className={cn(
+        'z-50 min-w-[8rem] overflow-hidden rounded-md border border-slate-200 bg-white p-1 text-slate-950 shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50',
+        className
+      )}
+      {...props}
+    />
+  </DropdownMenuPrimitive.Portal>
+));
+DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName;
+
+const DropdownMenuItem = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
+    inset?: boolean;
+  }
+>(({ className, inset, ...props }, ref) => (
+  <DropdownMenuPrimitive.Item
+    ref={ref}
+    className={cn(
+      'relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-slate-100 focus:text-slate-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:focus:bg-slate-800 dark:focus:text-slate-50',
+      inset && 'pl-8',
+      className
+    )}
+    {...props}
+  />
+));
+DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName;
+
+const DropdownMenuCheckboxItem = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.CheckboxItem>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.CheckboxItem>
+>(({ className, children, checked, ...props }, ref) => (
+  <DropdownMenuPrimitive.CheckboxItem
+    ref={ref}
+    className={cn(
+      'relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-slate-100 focus:text-slate-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:focus:bg-slate-800 dark:focus:text-slate-50',
+      className
+    )}
+    checked={checked}
+    {...props}
+  >
+    <span className="absolute left-2 flex size-3.5 items-center justify-center">
+      <DropdownMenuPrimitive.ItemIndicator>
+        <Check className="size-4" />
+      </DropdownMenuPrimitive.ItemIndicator>
+    </span>
+    {children}
+  </DropdownMenuPrimitive.CheckboxItem>
+));
+DropdownMenuCheckboxItem.displayName =
+  DropdownMenuPrimitive.CheckboxItem.displayName;
+
+const DropdownMenuRadioItem = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.RadioItem>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.RadioItem>
+>(({ className, children, ...props }, ref) => (
+  <DropdownMenuPrimitive.RadioItem
+    ref={ref}
+    className={cn(
+      'relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-slate-100 focus:text-slate-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:focus:bg-slate-800 dark:focus:text-slate-50',
+      className
+    )}
+    {...props}
+  >
+    <span className="absolute left-2 flex size-3.5 items-center justify-center">
+      <DropdownMenuPrimitive.ItemIndicator>
+        <Circle className="size-2 fill-current" />
+      </DropdownMenuPrimitive.ItemIndicator>
+    </span>
+    {children}
+  </DropdownMenuPrimitive.RadioItem>
+));
+DropdownMenuRadioItem.displayName = DropdownMenuPrimitive.RadioItem.displayName;
+
+const DropdownMenuLabel = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.Label>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Label> & {
+    inset?: boolean;
+  }
+>(({ className, inset, ...props }, ref) => (
+  <DropdownMenuPrimitive.Label
+    ref={ref}
+    className={cn(
+      'px-2 py-1.5 text-sm font-semibold',
+      inset && 'pl-8',
+      className
+    )}
+    {...props}
+  />
+));
+DropdownMenuLabel.displayName = DropdownMenuPrimitive.Label.displayName;
+
+const DropdownMenuSeparator = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.Separator>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Separator>
+>(({ className, ...props }, ref) => (
+  <DropdownMenuPrimitive.Separator
+    ref={ref}
+    className={cn('-mx-1 my-1 h-px bg-[#232d37] dark:bg-slate-800', className)}
+    {...props}
+  />
+));
+DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName;
+
+const DropdownMenuShortcut = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLSpanElement>) => {
+  return (
+    <span
+      className={cn('ml-auto text-xs tracking-widest opacity-60', className)}
+      {...props}
+    />
+  );
+};
+DropdownMenuShortcut.displayName = 'DropdownMenuShortcut';
+
+export {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuGroup,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuRadioGroup,
+};
+
+
+zoom-clone\components\ui\input.tsx
+
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+export interface InputProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {}
+
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, type, ...props }, ref) => {
+    return (
+      <input
+        type={type}
+        className={cn(
+          "flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-800 dark:bg-slate-950 dark:ring-offset-slate-950 dark:placeholder:text-slate-400 dark:focus-visible:ring-slate-300",
+          className
+        )}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+Input.displayName = "Input"
+
+export { Input }
+
+zoom-clone\components\ui\popover.tsx
+
+
+"use client"
+
+import * as React from "react"
+import * as PopoverPrimitive from "@radix-ui/react-popover"
+
+import { cn } from "@/lib/utils"
+
+const Popover = PopoverPrimitive.Root
+
+const PopoverTrigger = PopoverPrimitive.Trigger
+
+const PopoverContent = React.forwardRef<
+  React.ElementRef<typeof PopoverPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
+>(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
+  <PopoverPrimitive.Portal>
+    <PopoverPrimitive.Content
+      ref={ref}
+      align={align}
+      sideOffset={sideOffset}
+      className={cn(
+        "z-50 w-72 rounded-md border border-slate-200 bg-white p-4 text-slate-950 shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50",
+        className
+      )}
+      {...props}
+    />
+  </PopoverPrimitive.Portal>
+))
+PopoverContent.displayName = PopoverPrimitive.Content.displayName
+
+export { Popover, PopoverTrigger, PopoverContent }
+
+
+zoom-clone\components\ui\sheet.tsx
+
+'use client';
+
+import * as React from 'react';
+import * as SheetPrimitive from '@radix-ui/react-dialog';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { X } from 'lucide-react';
+
+import { cn } from '@/lib/utils';
+
+const Sheet = SheetPrimitive.Root;
+
+const SheetTrigger = SheetPrimitive.Trigger;
+
+const SheetClose = SheetPrimitive.Close;
+
+const SheetPortal = SheetPrimitive.Portal;
+
+const SheetOverlay = React.forwardRef<
+  React.ElementRef<typeof SheetPrimitive.Overlay>,
+  React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay>
+>(({ className, ...props }, ref) => (
+  <SheetPrimitive.Overlay
+    className={cn(
+      'fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+      className
+    )}
+    {...props}
+    ref={ref}
+  />
+));
+SheetOverlay.displayName = SheetPrimitive.Overlay.displayName;
+
+const sheetVariants = cva(
+  'fixed z-50 gap-4 bg-white p-6 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out dark:bg-slate-950',
+  {
+    variants: {
+      side: {
+        top: 'inset-x-0 top-0 border-b data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top',
+        bottom:
+          'inset-x-0 bottom-0 border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom',
+        left: 'inset-y-0 left-0 h-full w-3/4 border-r data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-sm',
+        right:
+          'inset-y-0 right-0 h-full w-3/4  border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm',
+      },
+    },
+    defaultVariants: {
+      side: 'right',
+    },
+  }
+);
+
+interface SheetContentProps
+  extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
+    VariantProps<typeof sheetVariants> {}
+
+const SheetContent = React.forwardRef<
+  React.ElementRef<typeof SheetPrimitive.Content>,
+  SheetContentProps
+>(({ side = 'right', className, children, ...props }, ref) => (
+  <SheetPortal>
+    <SheetOverlay />
+    <SheetPrimitive.Content
+      ref={ref}
+      className={cn(sheetVariants({ side }), className)}
+      {...props}
+    >
+      {children}
+      <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-slate-100 dark:ring-offset-slate-950 dark:focus:ring-slate-300 dark:data-[state=open]:bg-slate-800">
+        <X className="size-4 text-white" />
+        <span className="sr-only">Close</span>
+      </SheetPrimitive.Close>
+    </SheetPrimitive.Content>
+  </SheetPortal>
+));
+SheetContent.displayName = SheetPrimitive.Content.displayName;
+
+const SheetHeader = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      'flex flex-col space-y-2 text-center sm:text-left',
+      className
+    )}
+    {...props}
+  />
+);
+SheetHeader.displayName = 'SheetHeader';
+
+const SheetFooter = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      'flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2',
+      className
+    )}
+    {...props}
+  />
+);
+SheetFooter.displayName = 'SheetFooter';
+
+const SheetTitle = React.forwardRef<
+  React.ElementRef<typeof SheetPrimitive.Title>,
+  React.ComponentPropsWithoutRef<typeof SheetPrimitive.Title>
+>(({ className, ...props }, ref) => (
+  <SheetPrimitive.Title
+    ref={ref}
+    className={cn(
+      'text-lg font-semibold text-slate-950 dark:text-slate-50',
+      className
+    )}
+    {...props}
+  />
+));
+SheetTitle.displayName = SheetPrimitive.Title.displayName;
+
+const SheetDescription = React.forwardRef<
+  React.ElementRef<typeof SheetPrimitive.Description>,
+  React.ComponentPropsWithoutRef<typeof SheetPrimitive.Description>
+>(({ className, ...props }, ref) => (
+  <SheetPrimitive.Description
+    ref={ref}
+    className={cn('text-sm text-slate-500 dark:text-slate-400', className)}
+    {...props}
+  />
+));
+SheetDescription.displayName = SheetPrimitive.Description.displayName;
+
+export {
+  Sheet,
+  SheetPortal,
+  SheetOverlay,
+  SheetTrigger,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetFooter,
+  SheetTitle,
+  SheetDescription,
+};
+
+
+zoom-clone\components\ui\textarea.tsx
+
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+export interface TextareaProps
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+
+const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ className, ...props }, ref) => {
+    return (
+      <textarea
+        className={cn(
+          "flex min-h-[80px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-800 dark:bg-slate-950 dark:ring-offset-slate-950 dark:placeholder:text-slate-400 dark:focus-visible:ring-slate-300",
+          className
+        )}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+Textarea.displayName = "Textarea"
+
+export { Textarea }
+
+
+zoom-clone\components\ui\toast.tsx
+
+"use client"
+
+import * as React from "react"
+import * as ToastPrimitives from "@radix-ui/react-toast"
+import { cva, type VariantProps } from "class-variance-authority"
+import { X } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+
+const ToastProvider = ToastPrimitives.Provider
+
+const ToastViewport = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Viewport>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Viewport>
+>(({ className, ...props }, ref) => (
+  <ToastPrimitives.Viewport
+    ref={ref}
+    className={cn(
+      "fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]",
+      className
+    )}
+    {...props}
+  />
+))
+ToastViewport.displayName = ToastPrimitives.Viewport.displayName
+
+const toastVariants = cva(
+  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border border-slate-200 p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full dark:border-slate-800",
+  {
+    variants: {
+      variant: {
+        default: "border bg-white text-slate-950 dark:bg-slate-950 dark:text-slate-50",
+        destructive:
+          "destructive group border-red-500 bg-red-500 text-slate-50 dark:border-red-900 dark:bg-red-900 dark:text-slate-50",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
+
+const Toast = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Root>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
+    VariantProps<typeof toastVariants>
+>(({ className, variant, ...props }, ref) => {
+  return (
+    <ToastPrimitives.Root
+      ref={ref}
+      className={cn(toastVariants({ variant }), className)}
+      {...props}
+    />
+  )
+})
+Toast.displayName = ToastPrimitives.Root.displayName
+
+const ToastAction = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Action>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Action>
+>(({ className, ...props }, ref) => (
+  <ToastPrimitives.Action
+    ref={ref}
+    className={cn(
+      "inline-flex h-8 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-transparent px-3 text-sm font-medium ring-offset-white transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 group-[.destructive]:border-slate-100/40 group-[.destructive]:hover:border-red-500/30 group-[.destructive]:hover:bg-red-500 group-[.destructive]:hover:text-slate-50 group-[.destructive]:focus:ring-red-500 dark:border-slate-800 dark:ring-offset-slate-950 dark:hover:bg-slate-800 dark:focus:ring-slate-300 dark:group-[.destructive]:border-slate-800/40 dark:group-[.destructive]:hover:border-red-900/30 dark:group-[.destructive]:hover:bg-red-900 dark:group-[.destructive]:hover:text-slate-50 dark:group-[.destructive]:focus:ring-red-900",
+      className
+    )}
+    {...props}
+  />
+))
+ToastAction.displayName = ToastPrimitives.Action.displayName
+
+const ToastClose = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Close>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Close>
+>(({ className, ...props }, ref) => (
+  <ToastPrimitives.Close
+    ref={ref}
+    className={cn(
+      "absolute right-2 top-2 rounded-md p-1 text-slate-950/50 opacity-0 transition-opacity hover:text-slate-950 focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100 group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600 dark:text-slate-50/50 dark:hover:text-slate-50",
+      className
+    )}
+    toast-close=""
+    {...props}
+  >
+    <X className="h-4 w-4" />
+  </ToastPrimitives.Close>
+))
+ToastClose.displayName = ToastPrimitives.Close.displayName
+
+const ToastTitle = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Title>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Title>
+>(({ className, ...props }, ref) => (
+  <ToastPrimitives.Title
+    ref={ref}
+    className={cn("text-sm font-semibold", className)}
+    {...props}
+  />
+))
+ToastTitle.displayName = ToastPrimitives.Title.displayName
+
+const ToastDescription = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Description>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Description>
+>(({ className, ...props }, ref) => (
+  <ToastPrimitives.Description
+    ref={ref}
+    className={cn("text-sm opacity-90", className)}
+    {...props}
+  />
+))
+ToastDescription.displayName = ToastPrimitives.Description.displayName
+
+type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>
+
+type ToastActionElement = React.ReactElement<typeof ToastAction>
+
+export {
+  type ToastProps,
+  type ToastActionElement,
+  ToastProvider,
+  ToastViewport,
+  Toast,
+  ToastTitle,
+  ToastDescription,
+  ToastClose,
+  ToastAction,
+}
+
+zoom-clone\components\ui\toaster.tsx
+
+"use client";
+
+import {
+  Toast,
+  ToastClose,
+  ToastDescription,
+  ToastProvider,
+  ToastTitle,
+  ToastViewport,
+} from "@/components/ui/toast";
+import { useToast } from "@/components/ui/use-toast";
+
+export function Toaster() {
+  const { toasts } = useToast();
+
+  return (
+    <ToastProvider>
+      {toasts.map(function ({ id, title, description, action, ...props }) {
+        return (
+          <Toast
+            key={id}
+            {...props}
+            className="border-none bg-dark-1 text-white"
+          >
+            <div className="grid gap-1 ">
+              {title && <ToastTitle>{title}</ToastTitle>}
+              {description && (
+                <ToastDescription>{description}</ToastDescription>
+              )}
+            </div>
+            {action}
+            <ToastClose />
+          </Toast>
+        );
+      })}
+      <ToastViewport />
+    </ToastProvider>
+  );
+}
+
+
+zoom-clone\components\ui\use-toast.ts
+
+"use client"
+
+// Inspired by react-hot-toast library
+import * as React from "react"
+
+import type {
+  ToastActionElement,
+  ToastProps,
+} from "@/components/ui/toast"
+
+const TOAST_LIMIT = 1
+const TOAST_REMOVE_DELAY = 1000000
+
+type ToasterToast = ToastProps & {
+  id: string
+  title?: React.ReactNode
+  description?: React.ReactNode
+  action?: ToastActionElement
+}
+
+const actionTypes = {
+  ADD_TOAST: "ADD_TOAST",
+  UPDATE_TOAST: "UPDATE_TOAST",
+  DISMISS_TOAST: "DISMISS_TOAST",
+  REMOVE_TOAST: "REMOVE_TOAST",
+} as const
+
+let count = 0
+
+function genId() {
+  count = (count + 1) % Number.MAX_SAFE_INTEGER
+  return count.toString()
+}
+
+type ActionType = typeof actionTypes
+
+type Action =
+  | {
+      type: ActionType["ADD_TOAST"]
+      toast: ToasterToast
+    }
+  | {
+      type: ActionType["UPDATE_TOAST"]
+      toast: Partial<ToasterToast>
+    }
+  | {
+      type: ActionType["DISMISS_TOAST"]
+      toastId?: ToasterToast["id"]
+    }
+  | {
+      type: ActionType["REMOVE_TOAST"]
+      toastId?: ToasterToast["id"]
+    }
+
+interface State {
+  toasts: ToasterToast[]
+}
+
+const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
+
+const addToRemoveQueue = (toastId: string) => {
+  if (toastTimeouts.has(toastId)) {
+    return
+  }
+
+  const timeout = setTimeout(() => {
+    toastTimeouts.delete(toastId)
+    dispatch({
+      type: "REMOVE_TOAST",
+      toastId: toastId,
+    })
+  }, TOAST_REMOVE_DELAY)
+
+  toastTimeouts.set(toastId, timeout)
+}
+
+export const reducer = (state: State, action: Action): State => {
+  switch (action.type) {
+    case "ADD_TOAST":
+      return {
+        ...state,
+        toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
+      }
+
+    case "UPDATE_TOAST":
+      return {
+        ...state,
+        toasts: state.toasts.map((t) =>
+          t.id === action.toast.id ? { ...t, ...action.toast } : t
+        ),
+      }
+
+    case "DISMISS_TOAST": {
+      const { toastId } = action
+
+      // ! Side effects ! - This could be extracted into a dismissToast() action,
+      // but I'll keep it here for simplicity
+      if (toastId) {
+        addToRemoveQueue(toastId)
+      } else {
+        state.toasts.forEach((toast) => {
+          addToRemoveQueue(toast.id)
+        })
+      }
+
+      return {
+        ...state,
+        toasts: state.toasts.map((t) =>
+          t.id === toastId || toastId === undefined
+            ? {
+                ...t,
+                open: false,
+              }
+            : t
+        ),
+      }
+    }
+    case "REMOVE_TOAST":
+      if (action.toastId === undefined) {
+        return {
+          ...state,
+          toasts: [],
+        }
+      }
+      return {
+        ...state,
+        toasts: state.toasts.filter((t) => t.id !== action.toastId),
+      }
+  }
+}
+
+const listeners: Array<(state: State) => void> = []
+
+let memoryState: State = { toasts: [] }
+
+function dispatch(action: Action) {
+  memoryState = reducer(memoryState, action)
+  listeners.forEach((listener) => {
+    listener(memoryState)
+  })
+}
+
+type Toast = Omit<ToasterToast, "id">
+
+function toast({ ...props }: Toast) {
+  const id = genId()
+
+  const update = (props: ToasterToast) =>
+    dispatch({
+      type: "UPDATE_TOAST",
+      toast: { ...props, id },
+    })
+  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
+
+  dispatch({
+    type: "ADD_TOAST",
+    toast: {
+      ...props,
+      id,
+      open: true,
+      onOpenChange: (open) => {
+        if (!open) dismiss()
+      },
+    },
+  })
+
+  return {
+    id: id,
+    dismiss,
+    update,
+  }
+}
+
+function useToast() {
+  const [state, setState] = React.useState<State>(memoryState)
+
+  React.useEffect(() => {
+    listeners.push(setState)
+    return () => {
+      const index = listeners.indexOf(setState)
+      if (index > -1) {
+        listeners.splice(index, 1)
+      }
+    }
+  }, [state])
+
+  return {
+    ...state,
+    toast,
+    dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
+  }
+}
+
+export { useToast, toast }
+
+
+zoom-clone\components\Alert.tsx
+
+import Link from 'next/link';
+import Image from 'next/image';
+
+import { Button } from './ui/button';
+import { Card, CardContent } from './ui/card';
+
+interface PermissionCardProps {
+  title: string;
+  iconUrl?: string;
+}
+
+const Alert = ({ title, iconUrl }: PermissionCardProps) => {
+  return (
+    <section className="flex-center h-screen w-full">
+      <Card className="w-full max-w-[520px] border-none bg-dark-1 p-6 py-9 text-white">
+        <CardContent>
+          <div className="flex flex-col gap-9">
+            <div className="flex flex-col gap-3.5">
+              {iconUrl && (
+                <div className="flex-center">
+                  <Image src={iconUrl} width={72} height={72} alt="icon" />
+                </div>
+              )}
+              <p className="text-center text-xl font-semibold">{title}</p>
+            </div>
+
+            <Button asChild className="bg-blue-1">
+              <Link href="/">Back to Home</Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </section>
+  );
+};
+
+export default Alert;
+
+
+zoom-clone\components\CallList.tsx
+
+'use client';
+
+import { Call, CallRecording } from '@stream-io/video-react-sdk';
+
+import Loader from './Loader';
+import { useGetCalls } from '@/hooks/useGetCalls';
+import MeetingCard from './MeetingCard';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+const CallList = ({ type }: { type: 'ended' | 'upcoming' | 'recordings' }) => {
+  const router = useRouter();
+  const { endedCalls, upcomingCalls, callRecordings, isLoading } =
+    useGetCalls();
+  const [recordings, setRecordings] = useState<CallRecording[]>([]);
+
+  const getCalls = () => {
+    switch (type) {
+      case 'ended':
+        return endedCalls;
+      case 'recordings':
+        return recordings;
+      case 'upcoming':
+        return upcomingCalls;
+      default:
+        return [];
+    }
+  };
+
+  const getNoCallsMessage = () => {
+    switch (type) {
+      case 'ended':
+        return 'No Previous Calls';
+      case 'upcoming':
+        return 'No Upcoming Calls';
+      case 'recordings':
+        return 'No Recordings';
+      default:
+        return '';
+    }
+  };
+
+  useEffect(() => {
+    const fetchRecordings = async () => {
+      const callData = await Promise.all(
+        callRecordings?.map((meeting) => meeting.queryRecordings()) ?? [],
+      );
+
+      const recordings = callData
+        .filter((call) => call.recordings.length > 0)
+        .flatMap((call) => call.recordings);
+
+      setRecordings(recordings);
+    };
+
+    if (type === 'recordings') {
+      fetchRecordings();
+    }
+  }, [type, callRecordings]);
+
+  if (isLoading) return <Loader />;
+
+  const calls = getCalls();
+  const noCallsMessage = getNoCallsMessage();
+
+  return (
+    <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+      {calls && calls.length > 0 ? (
+        calls.map((meeting: Call | CallRecording) => (
+          <MeetingCard
+            key={(meeting as Call).id}
+            icon={
+              type === 'ended'
+                ? '/icons/previous.svg'
+                : type === 'upcoming'
+                  ? '/icons/upcoming.svg'
+                  : '/icons/recordings.svg'
+            }
+            title={
+              (meeting as Call).state?.custom?.description ||
+              (meeting as CallRecording).filename?.substring(0, 20) ||
+              'No Description'
+            }
+            date={
+              (meeting as Call).state?.startsAt?.toLocaleString() ||
+              (meeting as CallRecording).start_time?.toLocaleString()
+            }
+            isPreviousMeeting={type === 'ended'}
+            link={
+              type === 'recordings'
+                ? (meeting as CallRecording).url
+                : `${process.env.NEXT_PUBLIC_BASE_URL}/meeting/${(meeting as Call).id}`
+            }
+            buttonIcon1={type === 'recordings' ? '/icons/play.svg' : undefined}
+            buttonText={type === 'recordings' ? 'Play' : 'Start'}
+            handleClick={
+              type === 'recordings'
+                ? () => router.push(`${(meeting as CallRecording).url}`)
+                : () => router.push(`/meeting/${(meeting as Call).id}`)
+            }
+          />
+        ))
+      ) : (
+        <h1 className="text-2xl font-bold text-white">{noCallsMessage}</h1>
+      )}
+    </div>
+  );
+};
+
+export default CallList;
+
+
+zoom-clone\components\EndCallButton.tsx
+
+'use client';
+
+import { useCall, useCallStateHooks } from '@stream-io/video-react-sdk';
+
+import { Button } from './ui/button';
+import { useRouter } from 'next/navigation';
+
+const EndCallButton = () => {
+  const call = useCall();
+  const router = useRouter();
+
+  if (!call)
+    throw new Error(
+      'useStreamCall must be used within a StreamCall component.',
+    );
+
+  // https://getstream.io/video/docs/react/guides/call-and-participant-state/#participant-state-3
+  const { useLocalParticipant } = useCallStateHooks();
+  const localParticipant = useLocalParticipant();
+
+  const isMeetingOwner =
+    localParticipant &&
+    call.state.createdBy &&
+    localParticipant.userId === call.state.createdBy.id;
+
+  if (!isMeetingOwner) return null;
+
+  const endCall = async () => {
+    await call.endCall();
+    router.push('/');
+  };
+
+  return (
+    <Button onClick={endCall} className="bg-red-500">
+      End call for everyone
+    </Button>
+  );
+};
+
+export default EndCallButton;
+
+
+zoom-clone\components\HomeCard.tsx
+
+'use client';
+
+import Image from 'next/image';
+
+import { cn } from '@/lib/utils';
+
+interface HomeCardProps {
+  className?: string;
+  img: string;
+  title: string;
+  description: string;
+  handleClick?: () => void;
+}
+
+const HomeCard = ({ className, img, title, description, handleClick }: HomeCardProps) => {
+  return (
+    <section
+      className={cn(
+        'bg-orange-1 px-4 py-6 flex flex-col justify-between w-full xl:max-w-[270px] min-h-[260px] rounded-[14px] cursor-pointer',
+        className
+      )}
+      onClick={handleClick}
+    >
+      <div className="flex-center glassmorphism size-12 rounded-[10px]">
+        <Image src={img} alt="meeting" width={27} height={27} />
+      </div>
+      
+      <div className="flex flex-col gap-2">
+        <h1 className="text-2xl font-bold">{title}</h1>
+        <p className="text-lg font-normal">{description}</p>
+      </div>
+    </section>
+  );
+};
+
+export default HomeCard;
+
+
+zoom-clone\components\Loader.tsx
+
+import Image from 'next/image';
+
+const Loader = () => {
+  return (
+    <div className="flex-center h-screen w-full">
+      <Image
+        src="/icons/loading-circle.svg"
+        alt="Loading..."
+        width={50}
+        height={50}
+      />
+    </div>
+  );
+};
+
+export default Loader;
+
+
+zoom-clone\components\MeetingCard.tsx
+
+"use client";
+
+import Image from "next/image";
+
+import { cn } from "@/lib/utils";
+import { Button } from "./ui/button";
+import { avatarImages } from "@/constants";
+import { useToast } from "./ui/use-toast";
+
+interface MeetingCardProps {
+  title: string;
+  date: string;
+  icon: string;
+  isPreviousMeeting?: boolean;
+  buttonIcon1?: string;
+  buttonText?: string;
+  handleClick: () => void;
+  link: string;
+}
+
+const MeetingCard = ({
+  icon,
+  title,
+  date,
+  isPreviousMeeting,
+  buttonIcon1,
+  handleClick,
+  link,
+  buttonText,
+}: MeetingCardProps) => {
+  const { toast } = useToast();
+
+  return (
+    <section className="flex min-h-[258px] w-full flex-col justify-between rounded-[14px] bg-dark-1 px-5 py-8 xl:max-w-[568px]">
+      <article className="flex flex-col gap-5">
+        <Image src={icon} alt="upcoming" width={28} height={28} />
+        <div className="flex justify-between">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-2xl font-bold">{title}</h1>
+            <p className="text-base font-normal">{date}</p>
+          </div>
+        </div>
+      </article>
+      <article className={cn("flex justify-center relative", {})}>
+        <div className="relative flex w-full max-sm:hidden">
+          {avatarImages.map((img, index) => (
+            <Image
+              key={index}
+              src={img}
+              alt="attendees"
+              width={40}
+              height={40}
+              className={cn("rounded-full", { absolute: index > 0 })}
+              style={{ top: 0, left: index * 28 }}
+            />
+          ))}
+          <div className="flex-center absolute left-[136px] size-10 rounded-full border-[5px] border-dark-3 bg-dark-4">
+            +5
+          </div>
+        </div>
+        {!isPreviousMeeting && (
+          <div className="flex gap-2">
+            <Button onClick={handleClick} className="rounded bg-blue-1 px-6">
+              {buttonIcon1 && (
+                <Image src={buttonIcon1} alt="feature" width={20} height={20} />
+              )}
+              &nbsp; {buttonText}
+            </Button>
+            <Button
+              onClick={() => {
+                navigator.clipboard.writeText(link);
+                toast({
+                  title: "Link Copied",
+                });
+              }}
+              className="bg-dark-4 px-6"
+            >
+              <Image
+                src="/icons/copy.svg"
+                alt="feature"
+                width={20}
+                height={20}
+              />
+              &nbsp; Copy Link
+            </Button>
+          </div>
+        )}
+      </article>
+    </section>
+  );
+};
+
+export default MeetingCard;
+
+
+zoom-clone\components\MeetingModal.tsx
+
+"use client";
+import { ReactNode } from "react";
+import { Dialog, DialogContent } from "./ui/dialog";
+import { cn } from "@/lib/utils";
+import { Button } from "./ui/button";
+import Image from "next/image";
+
+interface MeetingModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  className?: string;
+  children?: ReactNode;
+  handleClick?: () => void;
+  buttonText?: string;
+  instantMeeting?: boolean;
+  image?: string;
+  buttonClassName?: string;
+  buttonIcon?: string;
+}
+
+const MeetingModal = ({
+  isOpen,
+  onClose,
+  title,
+  className,
+  children,
+  handleClick,
+  buttonText,
+  instantMeeting,
+  image,
+  buttonClassName,
+  buttonIcon,
+}: MeetingModalProps) => {
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="flex w-full max-w-[520px] flex-col gap-6 border-none bg-dark-1 px-6 py-9 text-white">
+        <div className="flex flex-col gap-6">
+          {image && (
+            <div className="flex justify-center">
+              <Image src={image} alt="checked" width={72} height={72} />
+            </div>
+          )}
+          <h1 className={cn("text-3xl font-bold leading-[42px]", className)}>
+            {title}
+          </h1>
+          {children}
+          <Button
+            className={
+              "bg-blue-1 focus-visible:ring-0 focus-visible:ring-offset-0"
+            }
+            onClick={handleClick}
+          >
+            {buttonIcon && (
+              <Image
+                src={buttonIcon}
+                alt="button icon"
+                width={13}
+                height={13}
+              />
+            )}{" "}
+            &nbsp;
+            {buttonText || "Schedule Meeting"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default MeetingModal;
+
+
+zoom-clone\components\MeetingRoom.tsx
+
+'use client';
+import { useState } from 'react';
+import {
+  CallControls,
+  CallParticipantsList,
+  CallStatsButton,
+  CallingState,
+  PaginatedGridLayout,
+  SpeakerLayout,
+  useCallStateHooks,
+} from '@stream-io/video-react-sdk';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Users, LayoutList } from 'lucide-react';
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
+import Loader from './Loader';
+import EndCallButton from './EndCallButton';
+import { cn } from '@/lib/utils';
+
+type CallLayoutType = 'grid' | 'speaker-left' | 'speaker-right';
+
+const MeetingRoom = () => {
+  const searchParams = useSearchParams();
+  const isPersonalRoom = !!searchParams.get('personal');
+  const router = useRouter();
+  const [layout, setLayout] = useState<CallLayoutType>('speaker-left');
+  const [showParticipants, setShowParticipants] = useState(false);
+  const { useCallCallingState } = useCallStateHooks();
+
+  // for more detail about types of CallingState see: https://getstream.io/video/docs/react/ui-cookbook/ringing-call/#incoming-call-panel
+  const callingState = useCallCallingState();
+
+  if (callingState !== CallingState.JOINED) return <Loader />;
+
+  const CallLayout = () => {
+    switch (layout) {
+      case 'grid':
+        return <PaginatedGridLayout />;
+      case 'speaker-right':
+        return <SpeakerLayout participantsBarPosition="left" />;
+      default:
+        return <SpeakerLayout participantsBarPosition="right" />;
+    }
+  };
+
+  return (
+    <section className="relative h-screen w-full overflow-hidden pt-4 text-white">
+      <div className="relative flex size-full items-center justify-center">
+        <div className=" flex size-full max-w-[1000px] items-center">
+          <CallLayout />
+        </div>
+        <div
+          className={cn('h-[calc(100vh-86px)] hidden ml-2', {
+            'show-block': showParticipants,
+          })}
+        >
+          <CallParticipantsList onClose={() => setShowParticipants(false)} />
+        </div>
+      </div>
+      {/* video layout and call controls */}
+      <div className="fixed bottom-0 flex w-full items-center justify-center gap-5">
+        <CallControls onLeave={() => router.push(`/`)} />
+
+        <DropdownMenu>
+          <div className="flex items-center">
+            <DropdownMenuTrigger className="cursor-pointer rounded-2xl bg-[#19232d] px-4 py-2 hover:bg-[#4c535b]  ">
+              <LayoutList size={20} className="text-white" />
+            </DropdownMenuTrigger>
+          </div>
+          <DropdownMenuContent className="border-dark-1 bg-dark-1 text-white">
+            {['Grid', 'Speaker-Left', 'Speaker-Right'].map((item, index) => (
+              <div key={index}>
+                <DropdownMenuItem
+                  onClick={() =>
+                    setLayout(item.toLowerCase() as CallLayoutType)
+                  }
+                >
+                  {item}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="border-dark-1" />
+              </div>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <CallStatsButton />
+        <button onClick={() => setShowParticipants((prev) => !prev)}>
+          <div className=" cursor-pointer rounded-2xl bg-[#19232d] px-4 py-2 hover:bg-[#4c535b]  ">
+            <Users size={20} className="text-white" />
+          </div>
+        </button>
+        {!isPersonalRoom && <EndCallButton />}
+      </div>
+    </section>
+  );
+};
+
+export default MeetingRoom;
+
+
+zoom-clone\components\MeetingSetup.tsx
+
+'use client';
+import { useEffect, useState } from 'react';
+import {
+  DeviceSettings,
+  VideoPreview,
+  useCall,
+  useCallStateHooks,
+} from '@stream-io/video-react-sdk';
+
+import Alert from './Alert';
+import { Button } from './ui/button';
+
+const MeetingSetup = ({
+  setIsSetupComplete,
+}: {
+  setIsSetupComplete: (value: boolean) => void;
+}) => {
+  // https://getstream.io/video/docs/react/guides/call-and-participant-state/#call-state
+  const { useCallEndedAt, useCallStartsAt } = useCallStateHooks();
+  const callStartsAt = useCallStartsAt();
+  const callEndedAt = useCallEndedAt();
+  const callTimeNotArrived =
+    callStartsAt && new Date(callStartsAt) > new Date();
+  const callHasEnded = !!callEndedAt;
+
+  const call = useCall();
+
+  if (!call) {
+    throw new Error(
+      'useStreamCall must be used within a StreamCall component.',
+    );
+  }
+
+  // https://getstream.io/video/docs/react/ui-cookbook/replacing-call-controls/
+  const [isMicCamToggled, setIsMicCamToggled] = useState(false);
+
+  useEffect(() => {
+    if (isMicCamToggled) {
+      call.camera.disable();
+      call.microphone.disable();
+    } else {
+      call.camera.enable();
+      call.microphone.enable();
+    }
+  }, [isMicCamToggled, call.camera, call.microphone]);
+
+  if (callTimeNotArrived)
+    return (
+      <Alert
+        title={`Your Meeting has not started yet. It is scheduled for ${callStartsAt.toLocaleString()}`}
+      />
+    );
+
+  if (callHasEnded)
+    return (
+      <Alert
+        title="The call has been ended by the host"
+        iconUrl="/icons/call-ended.svg"
+      />
+    );
+
+  return (
+    <div className="flex h-screen w-full flex-col items-center justify-center gap-3 text-white">
+      <h1 className="text-center text-2xl font-bold">Setup</h1>
+      <VideoPreview />
+      <div className="flex h-16 items-center justify-center gap-3">
+        <label className="flex items-center justify-center gap-2 font-medium">
+          <input
+            type="checkbox"
+            checked={isMicCamToggled}
+            onChange={(e) => setIsMicCamToggled(e.target.checked)}
+          />
+          Join with mic and camera off
+        </label>
+        <DeviceSettings />
+      </div>
+      <Button
+        className="rounded-md bg-green-500 px-4 py-2.5"
+        onClick={() => {
+          call.join();
+
+          setIsSetupComplete(true);
+        }}
+      >
+        Join meeting
+      </Button>
+    </div>
+  );
+};
+
+export default MeetingSetup;
+
+
+zoom-clone\components\MeetingTypeList.tsx
+
+/* eslint-disable camelcase */
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+import HomeCard from './HomeCard';
+import MeetingModal from './MeetingModal';
+import { Call, useStreamVideoClient } from '@stream-io/video-react-sdk';
+import { useUser } from '@clerk/nextjs';
+import Loader from './Loader';
+import { Textarea } from './ui/textarea';
+import ReactDatePicker from 'react-datepicker';
+import { useToast } from './ui/use-toast';
+import { Input } from './ui/input';
+
+const initialValues = {
+  dateTime: new Date(),
+  description: '',
+  link: '',
+};
+
+const MeetingTypeList = () => {
+  const router = useRouter();
+  const [meetingState, setMeetingState] = useState<
+    'isScheduleMeeting' | 'isJoiningMeeting' | 'isInstantMeeting' | undefined
+  >(undefined);
+  const [values, setValues] = useState(initialValues);
+  const [callDetail, setCallDetail] = useState<Call>();
+  const client = useStreamVideoClient();
+  const { user } = useUser();
+  const { toast } = useToast();
+
+  const createMeeting = async () => {
+    if (!client || !user) return;
+    try {
+      if (!values.dateTime) {
+        toast({ title: 'Please select a date and time' });
+        return;
+      }
+      const id = crypto.randomUUID();
+      const call = client.call('default', id);
+      if (!call) throw new Error('Failed to create meeting');
+      const startsAt =
+        values.dateTime.toISOString() || new Date(Date.now()).toISOString();
+      const description = values.description || 'Instant Meeting';
+      await call.getOrCreate({
+        data: {
+          starts_at: startsAt,
+          custom: {
+            description,
+          },
+        },
+      });
+      setCallDetail(call);
+      if (!values.description) {
+        router.push(`/meeting/${call.id}`);
+      }
+      toast({
+        title: 'Meeting Created',
+      });
+    } catch (error) {
+      console.error(error);
+      toast({ title: 'Failed to create Meeting' });
+    }
+  };
+
+  if (!client || !user) return <Loader />;
+
+  const meetingLink = `${process.env.NEXT_PUBLIC_BASE_URL}/meeting/${callDetail?.id}`;
+
+  return (
+    <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+      <HomeCard
+        img="/icons/add-meeting.svg"
+        title="New Meeting"
+        description="Start an instant meeting"
+        handleClick={() => setMeetingState('isInstantMeeting')}
+      />
+      <HomeCard
+        img="/icons/join-meeting.svg"
+        title="Join Meeting"
+        description="via invitation link"
+        className="bg-blue-1"
+        handleClick={() => setMeetingState('isJoiningMeeting')}
+      />
+      <HomeCard
+        img="/icons/schedule.svg"
+        title="Schedule Meeting"
+        description="Plan your meeting"
+        className="bg-purple-1"
+        handleClick={() => setMeetingState('isScheduleMeeting')}
+      />
+      <HomeCard
+        img="/icons/recordings.svg"
+        title="View Recordings"
+        description="Meeting Recordings"
+        className="bg-yellow-1"
+        handleClick={() => router.push('/recordings')}
+      />
+
+      {!callDetail ? (
+        <MeetingModal
+          isOpen={meetingState === 'isScheduleMeeting'}
+          onClose={() => setMeetingState(undefined)}
+          title="Create Meeting"
+          handleClick={createMeeting}
+        >
+          <div className="flex flex-col gap-2.5">
+            <label className="text-base font-normal leading-[22.4px] text-sky-2">
+              Add a description
+            </label>
+            <Textarea
+              className="border-none bg-dark-3 focus-visible:ring-0 focus-visible:ring-offset-0"
+              onChange={(e) =>
+                setValues({ ...values, description: e.target.value })
+              }
+            />
+          </div>
+          <div className="flex w-full flex-col gap-2.5">
+            <label className="text-base font-normal leading-[22.4px] text-sky-2">
+              Select Date and Time
+            </label>
+            <ReactDatePicker
+              selected={values.dateTime}
+              onChange={(date) => setValues({ ...values, dateTime: date! })}
+              showTimeSelect
+              timeFormat="HH:mm"
+              timeIntervals={15}
+              timeCaption="time"
+              dateFormat="MMMM d, yyyy h:mm aa"
+              className="w-full rounded bg-dark-3 p-2 focus:outline-none"
+            />
+          </div>
+        </MeetingModal>
+      ) : (
+        <MeetingModal
+          isOpen={meetingState === 'isScheduleMeeting'}
+          onClose={() => setMeetingState(undefined)}
+          title="Meeting Created"
+          handleClick={() => {
+            navigator.clipboard.writeText(meetingLink);
+            toast({ title: 'Link Copied' });
+          }}
+          image={'/icons/checked.svg'}
+          buttonIcon="/icons/copy.svg"
+          className="text-center"
+          buttonText="Copy Meeting Link"
+        />
+      )}
+
+      <MeetingModal
+        isOpen={meetingState === 'isJoiningMeeting'}
+        onClose={() => setMeetingState(undefined)}
+        title="Type the link here"
+        className="text-center"
+        buttonText="Join Meeting"
+        handleClick={() => router.push(values.link)}
+      >
+        <Input
+          placeholder="Meeting link"
+          onChange={(e) => setValues({ ...values, link: e.target.value })}
+          className="border-none bg-dark-3 focus-visible:ring-0 focus-visible:ring-offset-0"
+        />
+      </MeetingModal>
+
+      <MeetingModal
+        isOpen={meetingState === 'isInstantMeeting'}
+        onClose={() => setMeetingState(undefined)}
+        title="Start an Instant Meeting"
+        className="text-center"
+        buttonText="Start Meeting"
+        handleClick={createMeeting}
+      />
+    </section>
+  );
+};
+
+export default MeetingTypeList;
+
+
+zoom-clone\components\MobileNav.tsx
+
+'use client';
+
+import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
+import { Sheet, SheetClose, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { sidebarLinks } from '@/constants';
+import { cn } from '@/lib/utils';
+
+const MobileNav = () => {
+  const pathname = usePathname();
+
+  return (
+    <section className="w-full max-w-[264px]">
+      <Sheet>
+        <SheetTrigger asChild>
+          <Image
+            src="/icons/hamburger.svg"
+            width={36}
+            height={36}
+            alt="hamburger icon"
+            className="cursor-pointer sm:hidden"
+          />
+        </SheetTrigger>
+        <SheetContent side="left" className="border-none bg-dark-1">
+          <Link href="/" className="flex items-center gap-1">
+            <Image
+              src="/icons/logo.svg"
+              width={32}
+              height={32}
+              alt="C-A logo"
+            />
+            <p className="text-[26px] font-extrabold text-white">C-A</p>
+          </Link>
+          <div className="flex h-[calc(100vh-72px)] flex-col justify-between overflow-y-auto">
+            <SheetClose asChild>
+              <section className=" flex h-full flex-col gap-6 pt-16 text-white">
+                {sidebarLinks.map((item) => {
+                  const isActive = pathname === item.route;
+
+                  return (
+                    <SheetClose asChild key={item.route}>
+                      <Link
+                        href={item.route}
+                        key={item.label}
+                        className={cn(
+                          'flex gap-4 items-center p-4 rounded-lg w-full max-w-60',
+                          {
+                            'bg-blue-1': isActive,
+                          }
+                        )}
+                      >
+                        <Image
+                          src={item.imgURL}
+                          alt={item.label}
+                          width={20}
+                          height={20}
+                        />
+                        <p className="font-semibold">{item.label}</p>
+                      </Link>
+                    </SheetClose>
+                  );
+                })}
+              </section>
+            </SheetClose>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </section>
+  );
+};
+
+export default MobileNav;
+
+
+zoom-clone\components\Navbar.tsx
+
+import Image from 'next/image';
+import Link from 'next/link';
+import { SignedIn, UserButton } from '@clerk/nextjs';
+
+import MobileNav from './MobileNav';
+
+const Navbar = () => {
+  return (
+    <nav className="flex-between fixed z-50 w-full bg-dark-1 px-6 py-4 lg:px-10">
+      <Link href="/" className="flex items-center gap-1">
+        <Image
+          src="/icons/logo.svg"
+          width={32}
+          height={32}
+          alt="C-A logo"
+          className="max-sm:size-10"
+        />
+        <p className="text-[26px] font-extrabold text-white max-sm:hidden">
+          C-A
+        </p>
+      </Link>
+      <div className="flex-between gap-5">
+        <SignedIn>
+          <UserButton afterSignOutUrl="/sign-in" />
+        </SignedIn>
+
+        <MobileNav />
+      </div>
+    </nav>
+  );
+};
+
+export default Navbar;
+
+
+zoom-clone\components\Sidebar.tsx
+
+'use client';
+import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
+import { sidebarLinks } from '@/constants';
+import { cn } from '@/lib/utils';
+
+const Sidebar = () => {
+  const pathname = usePathname();
+
+  return (
+    <section className="sticky left-0 top-0 flex h-screen w-fit flex-col  justify-between  bg-dark-1 p-6 pt-28 text-white max-sm:hidden lg:w-[264px]">
+      <div className="flex flex-1 flex-col gap-6">
+        {sidebarLinks.map((item) => {
+          const isActive = pathname === item.route || pathname.startsWith(`${item.route}/`);
+          
+          return (
+            <Link
+              href={item.route}
+              key={item.label}
+              className={cn(
+                'flex gap-4 items-center p-4 rounded-lg justify-start',
+                {
+                  'bg-blue-1': isActive,
+                }
+              )}
+            >
+              <Image
+                src={item.imgURL}
+                alt={item.label}
+                width={24}
+                height={24}
+              />
+              <p className="text-lg font-semibold max-lg:hidden">
+                {item.label}
+              </p>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
+  );
+};
+
+export default Sidebar;
+
+
+zoom-clone\constants\index.ts
+
+export const sidebarLinks = [
+    {
+      imgURL: '/icons/Home.svg',
+      route: '/',
+      label: 'Home',
+    },
+  
+    {
+      imgURL: '/icons/upcoming.svg',
+      route: '/upcoming',
+      label: 'Upcoming',
+    },
+    {
+      imgURL: '/icons/previous.svg',
+      route: '/previous',
+      label: 'Previous',
+    },
+    {
+      imgURL: '/icons/Video.svg',
+      route: '/recordings',
+      label: 'Recordings',
+    },
+    {
+      imgURL: '/icons/add-personal.svg',
+      route: '/personal-room',
+      label: 'Personal Room',
+    },
+  ];
+  
+  export const avatarImages = [
+    '/images/avatar-1.jpeg',
+    '/images/avatar-2.jpeg',
+    '/images/avatar-3.png',
+    '/images/avatar-4.png',
+    '/images/avatar-5.png',
+  ];
+
+  
+  zoom-clone\hooks\useGetCallById.ts
+.
+import { useEffect, useState } from 'react';
+import { Call, useStreamVideoClient } from '@stream-io/video-react-sdk';
+
+export const useGetCallById = (id: string | string[]) => {
+  const [call, setCall] = useState<Call>();
+  const [isCallLoading, setIsCallLoading] = useState(true);
+
+  const client = useStreamVideoClient();
+
+  useEffect(() => {
+    if (!client) return;
+    
+    const loadCall = async () => {
+      try {
+        // https://getstream.io/video/docs/react/guides/querying-calls/#filters
+        const { calls } = await client.queryCalls({ filter_conditions: { id } });
+
+        if (calls.length > 0) setCall(calls[0]);
+
+        setIsCallLoading(false);
+      } catch (error) {
+        console.error(error);
+        setIsCallLoading(false);
+      }
+    };
+
+    loadCall();
+  }, [client, id]);
+
+  return { call, isCallLoading };
+};
+
+zoom-clone\hooks\useGetCalls.ts
+
+import { useEffect, useState } from 'react';
+import { useUser } from '@clerk/nextjs';
+import { Call, useStreamVideoClient } from '@stream-io/video-react-sdk';
+
+export const useGetCalls = () => {
+  const { user } = useUser();
+  const client = useStreamVideoClient();
+  const [calls, setCalls] = useState<Call[]>();
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const loadCalls = async () => {
+      if (!client || !user?.id) return;
+      
+      setIsLoading(true);
+
+      try {
+        // https://getstream.io/video/docs/react/guides/querying-calls/#filters
+        const { calls } = await client.queryCalls({
+          sort: [{ field: 'starts_at', direction: -1 }],
+          filter_conditions: {
+            starts_at: { $exists: true },
+            $or: [
+              { created_by_user_id: user.id },
+              { members: { $in: [user.id] } },
+            ],
+          },
+        });
+
+        setCalls(calls);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadCalls();
+  }, [client, user?.id]);
+
+  const now = new Date();
+
+  const endedCalls = calls?.filter(({ state: { startsAt, endedAt } }: Call) => {
+    return (startsAt && new Date(startsAt) < now) || !!endedAt
+  })
+
+  const upcomingCalls = calls?.filter(({ state: { startsAt } }: Call) => {
+    return startsAt && new Date(startsAt) > now
+  })
+
+  return { endedCalls, upcomingCalls, callRecordings: calls, isLoading }
+};
+
+zoom-clone\lib\utils.ts
+
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+
+zoom-clone\providers\StreamClientProvider.tsx
+
+'use client';
+
+import { ReactNode, useEffect, useState } from 'react';
+import { StreamVideoClient, StreamVideo } from '@stream-io/video-react-sdk';
+import { useUser } from '@clerk/nextjs';
+
+import { tokenProvider } from '@/actions/stream.actions';
+import Loader from '@/components/Loader';
+
+const API_KEY = process.env.NEXT_PUBLIC_STREAM_API_KEY;
+
+const StreamVideoProvider = ({ children }: { children: ReactNode }) => {
+  const [videoClient, setVideoClient] = useState<StreamVideoClient>();
+  const { user, isLoaded } = useUser();
+
+  useEffect(() => {
+    if (!isLoaded || !user) return;
+    if (!API_KEY) throw new Error('Stream API key is missing');
+
+    const client = new StreamVideoClient({
+      apiKey: API_KEY,
+      user: {
+        id: user?.id,
+        name: user?.username || user?.id,
+        image: user?.imageUrl,
+      },
+      tokenProvider,
+    });
+
+    setVideoClient(client);
+  }, [user, isLoaded]);
+
+  if (!videoClient) return <Loader />;
+
+  return <StreamVideo client={videoClient}>{children}</StreamVideo>;
+};
+
+export default StreamVideoProvider;
+
+
+zoom-clone\.eslintrc.json
+
+{
+    "extends": [
+      "next/core-web-vitals",
+      "standard",
+      "plugin:tailwindcss/recommended",
+      "prettier"
+    ]
+  }
+
+  zoom-clone\.prettierrc
+
+  {
+    "singleQuote": true
+  }
+  
+
+  zoom-clone\components.json
+
+  {
+    "$schema": "https://ui.shadcn.com/schema.json",
+    "style": "default",
+    "rsc": true,
+    "tsx": true,
+    "tailwind": {
+      "config": "tailwind.config.ts",
+      "css": "app/globals.css",
+      "baseColor": "slate",
+      "cssVariables": false,
+      "prefix": ""
+    },
+    "aliases": {
+      "components": "@/components",
+      "utils": "@/lib/utils"
+    }
+  }
+
+
+  zoom-clone\middleware.ts
+
+
+  import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+
+const protectedRoute = createRouteMatcher([
+  '/',
+  '/upcoming',
+  '/meeting(.*)',
+  '/previous',
+  '/recordings',
+  '/personal-room',
+]);
+
+export default clerkMiddleware((auth, req) => {
+  if (protectedRoute(req)) auth().protect();
+});
+
+export const config = {
+  matcher: ['/((?!.+\\.[\\w]+$|_next).*)', '/', '/(api|trpc)(.*)'],
+};
+
+
+zoom-clone\next-env.d.ts
+
+/// <reference types="next" />
+/// <reference types="next/image-types/global" />
+
+// NOTE: This file should not be edited
+// see https://nextjs.org/docs/basic-features/typescript for more information.
+
+
+zoom-clone\next.config.mjs
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+    images: {
+      remotePatterns: [
+        {
+          protocol: 'https',
+          hostname: 'img.clerk.com',
+        },
+      ],
+    },
+  };
+  
+  export default nextConfig;
+
+  
+  zoom-clone\package.json
+
+  {
+    "name": "C-A",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+      "dev": "next dev",
+      "build": "next build",
+      "start": "next start",
+      "lint": "next lint"
+    },
+    "dependencies": {
+      "@clerk/nextjs": "^5.0.0-beta.35",
+      "@radix-ui/react-dialog": "^1.0.5",
+      "@radix-ui/react-dropdown-menu": "^2.0.6",
+      "@radix-ui/react-popover": "^1.0.7",
+      "@radix-ui/react-slot": "^1.0.2",
+      "@radix-ui/react-toast": "^1.1.5",
+      "@stream-io/node-sdk": "^0.1.12",
+      "@stream-io/video-react-sdk": "^0.5.1",
+      "class-variance-authority": "^0.7.0",
+      "clsx": "^2.1.0",
+      "date-fns": "^3.4.0",
+      "lucide-react": "^0.350.0",
+      "next": "^14.1.3",
+      "react": "^18",
+      "react-datepicker": "^6.3.0",
+      "react-dom": "^18",
+      "tailwind-merge": "^2.2.1",
+      "tailwindcss-animate": "^1.0.7",
+      "uuid": "^9.0.1"
+    },
+    "devDependencies": {
+      "@types/node": "^20",
+      "@types/react": "^18",
+      "@types/react-datepicker": "^6.2.0",
+      "@types/react-dom": "^18",
+      "@types/uuid": "^9.0.8",
+      "autoprefixer": "^10.0.1",
+      "eslint": "^8",
+      "eslint-config-next": "14.1.3",
+      "eslint-config-prettier": "^9.1.0",
+      "eslint-config-standard": "^17.1.0",
+      "eslint-plugin-tailwindcss": "^3.14.3",
+      "postcss": "^8",
+      "prettier": "^3.2.5",
+      "tailwindcss": "^3.3.0",
+      "typescript": "^5"
+    }
+  }
+
+  
+  zoom-clone\postcss.config.js
+
+  module.exports = {
+    plugins: {
+      tailwindcss: {},
+      autoprefixer: {},
+    },
+  };
+  
+  zoom-clone\README.md
+
+
+  <div align="center">
+  <br />
+    <a href="https://youtu.be/R8CIO1DZ2b8" target="_blank">
+      <img src="https://github.com/adrianhajdin/zoom-clone/assets/67959015/f09a8421-67d3-45ce-b9bc-a791cdc2774b" alt="Project Banner">
+    </a>
+  
+  <br />
+
+  <div>
+    <img src="https://img.shields.io/badge/-TypeScript-black?style=for-the-badge&logoColor=white&logo=typescript&color=3178C6" alt="typescript" />
+    <img src="https://img.shields.io/badge/-Next_JS-black?style=for-the-badge&logoColor=white&logo=nextdotjs&color=000000" alt="nextdotjs" />
+    <img src="https://img.shields.io/badge/-Tailwind_CSS-black?style=for-the-badge&logoColor=white&logo=tailwindcss&color=06B6D4" alt="tailwindcss" />
+  </div>
+
+  <h3 align="center">A Zoom Clone</h3>
+
+   <div align="center">
+     Build this project step by step with our detailed tutorial on <a href="https://www.youtube.com/@javascriptmastery/videos" target="_blank"><b>JavaScript Mastery</b></a> YouTube. Join the JSM family!
+    </div>
+</div>
+
+## 📋 <a name="table">Table of Contents</a>
+
+1. 🤖 [Introduction](#introduction)
+2. ⚙️ [Tech Stack](#tech-stack)
+3. 🔋 [Features](#features)
+4. 🤸 [Quick Start](#quick-start)
+5. 🕸️ [Assets & Code](#snippets)
+6. 🚀 [More](#more)
+
+## 🚨 Tutorial
+
+This repository contains the code corresponding to an in-depth tutorial available on our YouTube channel, <a href="https://www.youtube.com/@javascriptmastery/videos" target="_blank"><b>JavaScript Mastery</b></a>. 
+
+If you prefer visual learning, this is the perfect resource for you. Follow our tutorial to learn how to build projects like these step-by-step in a beginner-friendly manner!
+
+<a href="https://youtu.be/R8CIO1DZ2b8" target="_blank"><img src="https://github.com/sujatagunale/EasyRead/assets/151519281/1736fca5-a031-4854-8c09-bc110e3bc16d" /></a>
+
+## <a name="introduction">🤖 Introduction</a>
+
+Built with the latest Next.js and TypeScript, this project replicates Zoom, a widely used video conferencing tool. It enables users to securely log in, create meetings and access various meeting functionalities such as recording, screen sharing, and managing participants.
+
+If you're getting started and need assistance or face any bugs, join our active Discord community with over 30 thousand members. It's a place where people help each other out.
+
+<a href="https://discord.com/invite/n6EdbFJ" target="_blank"><img src="https://github.com/sujatagunale/EasyRead/assets/151519281/618f4872-1e10-42da-8213-1d69e486d02e" /></a>
+
+## <a name="tech-stack">⚙️ Tech Stack</a>
+
+- Next.js
+- TypeScript
+- Clerk
+- getstream
+- shadcn
+- Tailwind CSS
+
+## <a name="features">🔋 Features</a>
+
+
+👉 **Authentication**: Implements authentication and authorization features using Clerk, allowing users to securely log in via social sign-on or traditional email and password methods, while ensuring appropriate access levels and permissions within the platform.
+
+👉 **New Meeting**: Quickly start a new meeting, configuring camera and microphone settings before joining.
+
+👉 **Meeting Controls**: Participants have full control over meeting aspects, including recording, emoji reactions, screen sharing, muting/unmuting, sound adjustments, grid layout, participant list view, and individual participant management (pinning, muting, unmuting, blocking, allowing video share).
+
+👉 **Exit Meeting**: Participants can leave a meeting, or creators can end it for all attendees.
+
+👉 **Schedule Future Meetings**: Input meeting details (date, time) to schedule future meetings, accessible on the 'Upcoming Meetings' page for sharing the link or immediate start.
+
+👉 **Past Meetings List**: Access a list of previously held meetings, including details and metadata.
+
+👉 **View Recorded Meetings**: Access recordings of past meetings for review or reference.
+
+👉 **Personal Room**: Users have a personal room with a unique meeting link for instant meetings, shareable with others.
+
+👉 **Join Meetings via Link**: Easily join meetings created by others by providing a link.
+
+👉 **Secure Real-time Functionality**: All interactions within the platform are secure and occur in real-time, maintaining user privacy and data integrity.
+
+👉 **Responsive Design**: Follows responsive design principles to ensure optimal user experience across devices, adapting seamlessly to different screen sizes and resolutions.
+
+and many more, including code architecture and reusability. 
+
+## <a name="quick-start">🤸 Quick Start</a>
+
+Follow these steps to set up the project locally on your machine.
+
+**Prerequisites**
+
+Make sure you have the following installed on your machine:
+
+- [Git](https://git-scm.com/)
+- [Node.js](https://nodejs.org/en)
+- [npm](https://www.npmjs.com/) (Node Package Manager)
+
+**Cloning the Repository**
+
+```bash
+git clone https://github.com/adrianhajdin/zoom-clone.git
+cd zoom-clone
+```
+
+**Installation**
+
+Install the project dependencies using npm:
+
+```bash
+npm install
+```
+
+**Set Up Environment Variables**
+
+Create a new file named `.env` in the root of your project and add the following content:
+
+```env
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
+
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+
+NEXT_PUBLIC_STREAM_API_KEY=
+STREAM_SECRET_KEY=
+```
+
+Replace the placeholder values with your actual Clerk & getstream credentials. You can obtain these credentials by signing up on the [Clerk website](https://clerk.com/) and [getstream website](https://getstream.io/)
+
+**Running the Project**
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser to view the project.
+
+## <a name="snippets">🕸️ Snippets</a>
+
+<details>
+<summary><code>app/globals.css</code></summary>
+
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ======== stream css overrides ======== */
+.str-video__call-stats {
+  max-width: 500px;
+  position: relative;
+}
+
+.str-video__speaker-layout__wrapper {
+  max-height: 700px;
+}
+
+.str-video__participant-details {
+  color: white;
+}
+
+.str-video__menu-container {
+  color: white;
+}
+
+.str-video__notification {
+  color: white;
+}
+
+.str-video__participant-list {
+  background-color: #1c1f2e;
+  padding: 10px;
+  border-radius: 10px;
+  color: white;
+  height: 100%;
+}
+
+.str-video__call-controls__button {
+  height: 40px;
+}
+
+.glassmorphism {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.glassmorphism2 {
+  background: rgba(18, 17, 17, 0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ==== clerk class override ===== */
+
+.cl-userButtonPopoverActionButtonIcon {
+  color: white;
+}
+
+.cl-logoBox {
+  height: 40px;
+}
+.cl-dividerLine {
+  background: #252a41;
+  height: 2px;
+}
+
+.cl-socialButtonsIconButton {
+  border: 3px solid #565761;
+}
+
+.cl-internal-wkkub3 {
+  color: white;
+}
+.cl-userButtonPopoverActionButton {
+  color: white;
+}
+
+/* =============================== */
+
+@layer utilities {
+  .flex-center {
+    @apply flex justify-center items-center;
+  }
+
+  .flex-between {
+    @apply flex justify-between items-center;
+  }
+}
+
+/* animation */
+
+.show-block {
+  width: 100%;
+  max-width: 350px;
+  display: block;
+  animation: show 0.7s forwards linear;
+}
+
+@keyframes show {
+  0% {
+    animation-timing-function: ease-in;
+    width: 0%;
+  }
+
+  100% {
+    animation-timing-function: ease-in;
+    width: 100%;
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><code>tailwind.config.ts</code></summary>
+
+```typescript
+import type { Config } from 'tailwindcss';
+
+const config = {
+  darkMode: ['class'],
+  content: [
+    './pages/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './app/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}',
+  ],
+  prefix: '',
+  theme: {
+    container: {
+      center: true,
+      padding: '2rem',
+      screens: {
+        '2xl': '1400px',
+      },
+    },
+    extend: {
+      colors: {
+        dark: {
+          1: '#1C1F2E',
+          2: '#161925',
+          3: '#252A41',
+          4: '#1E2757',
+        },
+        blue: {
+          1: '#0E78F9',
+        },
+        sky: {
+          1: '#C9DDFF',
+          2: '#ECF0FF',
+          3: '#F5FCFF',
+        },
+        orange: {
+          1: '#FF742E',
+        },
+        purple: {
+          1: '#830EF9',
+        },
+        yellow: {
+          1: '#F9A90E',
+        },
+      },
+      keyframes: {
+        'accordion-down': {
+          from: { height: '0' },
+          to: { height: 'var(--radix-accordion-content-height)' },
+        },
+        'accordion-up': {
+          from: { height: 'var(--radix-accordion-content-height)' },
+          to: { height: '0' },
+        },
+      },
+      animation: {
+        'accordion-down': 'accordion-down 0.2s ease-out',
+        'accordion-up': 'accordion-up 0.2s ease-out',
+      },
+      backgroundImage: {
+        hero: "url('/images/hero-background.png')",
+      },
+    },
+  },
+  plugins: [require('tailwindcss-animate')],
+} satisfies Config;
+
+export default config;
+```
+
+</details>
+
+<details>
+<summary><code>components/MeetingCard.tsx</code></summary>
+
+```typescript
+"use client";
+
+import Image from "next/image";
+
+import { cn } from "@/lib/utils";
+import { Button } from "./ui/button";
+import { avatarImages } from "@/constants";
+import { useToast } from "./ui/use-toast";
+
+interface MeetingCardProps {
+  title: string;
+  date: string;
+  icon: string;
+  isPreviousMeeting?: boolean;
+  buttonIcon1?: string;
+  buttonText?: string;
+  handleClick: () => void;
+  link: string;
+}
+
+const MeetingCard = ({
+  icon,
+  title,
+  date,
+  isPreviousMeeting,
+  buttonIcon1,
+  handleClick,
+  link,
+  buttonText,
+}: MeetingCardProps) => {
+  const { toast } = useToast();
+
+  return (
+    <section className="flex min-h-[258px] w-full flex-col justify-between rounded-[14px] bg-dark-1 px-5 py-8 xl:max-w-[568px]">
+      <article className="flex flex-col gap-5">
+        <Image src={icon} alt="upcoming" width={28} height={28} />
+        <div className="flex justify-between">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-2xl font-bold">{title}</h1>
+            <p className="text-base font-normal">{date}</p>
+          </div>
+        </div>
+      </article>
+      <article className={cn("flex justify-center relative", {})}>
+        <div className="relative flex w-full max-sm:hidden">
+          {avatarImages.map((img, index) => (
+            <Image
+              key={index}
+              src={img}
+              alt="attendees"
+              width={40}
+              height={40}
+              className={cn("rounded-full", { absolute: index > 0 })}
+              style={{ top: 0, left: index * 28 }}
+            />
+          ))}
+          <div className="flex-center absolute left-[136px] size-10 rounded-full border-[5px] border-dark-3 bg-dark-4">
+            +5
+          </div>
+        </div>
+        {!isPreviousMeeting && (
+          <div className="flex gap-2">
+            <Button onClick={handleClick} className="rounded bg-blue-1 px-6">
+              {buttonIcon1 && (
+                <Image src={buttonIcon1} alt="feature" width={20} height={20} />
+              )}
+              &nbsp; {buttonText}
+            </Button>
+            <Button
+              onClick={() => {
+                navigator.clipboard.writeText(link);
+                toast({
+                  title: "Link Copied",
+                });
+              }}
+              className="bg-dark-4 px-6"
+            >
+              <Image
+                src="/icons/copy.svg"
+                alt="feature"
+                width={20}
+                height={20}
+              />
+              &nbsp; Copy Link
+            </Button>
+          </div>
+        )}
+      </article>
+    </section>
+  );
+};
+
+export default MeetingCard;
+```
+
+</details>
+
+## <a name="links">🔗 Links</a>
+
+Public assets used in the project can be found [here](https://drive.google.com/file/d/1ofTpWii_sCIdJ14uQ431xWVXpYgjtQ8Q/view?usp=sharing)
+
+## <a name="more">🚀 More</a>
+
+**Advance your skills with Next.js Pro Course**
+
+Enjoyed creating this project? Dive deeper into our PRO courses for a richer learning experience. They're packed with detailed explanations, cool features, and exercises to boost your skills. Give it a go!
+
+<a href="https://www.jsmastery.pro/ultimate-next-course" target="_blank">
+<img src="https://i.ibb.co/804sPK6/Image-720.png" alt="Project Banner">
+</a>
+
+
+zoom-clone\tailwind.config.ts
+
+import type { Config } from 'tailwindcss';
+
+const config = {
+  darkMode: ['class'],
+  content: [
+    './pages/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './app/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}',
+  ],
+  prefix: '',
+  theme: {
+    container: {
+      center: true,
+      padding: '2rem',
+      screens: {
+        '2xl': '1400px',
+      },
+    },
+    extend: {
+      colors: {
+        dark: {
+          1: '#1C1F2E',
+          2: '#161925',
+          3: '#252A41',
+          4: '#1E2757',
+        },
+        blue: {
+          1: '#0E78F9',
+        },
+        sky: {
+          1: '#C9DDFF',
+          2: '#ECF0FF',
+          3: '#F5FCFF',
+        },
+        orange: {
+          1: '#FF742E',
+        },
+        purple: {
+          1: '#830EF9',
+        },
+        yellow: {
+          1: '#F9A90E',
+        },
+      },
+      keyframes: {
+        'accordion-down': {
+          from: { height: '0' },
+          to: { height: 'var(--radix-accordion-content-height)' },
+        },
+        'accordion-up': {
+          from: { height: 'var(--radix-accordion-content-height)' },
+          to: { height: '0' },
+        },
+      },
+      animation: {
+        'accordion-down': 'accordion-down 0.2s ease-out',
+        'accordion-up': 'accordion-up 0.2s ease-out',
+      },
+      backgroundImage: {
+        hero: "url('/images/hero-background.png')",
+      },
+    },
+  },
+  plugins: [require('tailwindcss-animate')],
+} satisfies Config;
+
+export default config;
+
+
+zoom-clone\tsconfig.json
+
+{
+    "compilerOptions": {
+      "lib": ["dom", "dom.iterable", "esnext"],
+      "allowJs": true,
+      "skipLibCheck": true,
+      "strict": true,
+      "noEmit": true,
+      "esModuleInterop": true,
+      "module": "esnext",
+      "moduleResolution": "bundler",
+      "resolveJsonModule": true,
+      "isolatedModules": true,
+      "jsx": "preserve",
+      "incremental": true,
+      "plugins": [
+        {
+          "name": "next"
+        }
+      ],
+      "paths": {
+        "@/*": ["./*"]
+      }
+    },
+    "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+    "exclude": ["node_modules"]
+  }
+
+  

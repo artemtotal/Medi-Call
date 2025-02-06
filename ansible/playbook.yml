@@ -1,0 +1,50 @@
+---
+- name: Configure EC2 instances
+  hosts: ec2
+  become: true
+  tasks:
+    - name: Update package manager (Amazon Linux)
+      yum:
+        name: "*"
+        state: latest
+      when: ansible_os_family == "RedHat"
+
+    - name: Install Docker (Amazon Linux)
+      yum:
+        name: docker
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Start and enable Docker service
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    # If the image is private on Docker Hub, log in:
+    - name: Login to Docker Hub
+      command: >
+        docker login -u "{{ dockerhub_username }}"
+        -p "{{ dockerhub_password }}"
+      no_log: true
+      vars:
+        dockerhub_username: "{{ lookup('env','DOCKERHUB_USERNAME') }}"
+        dockerhub_password: "{{ lookup('env','DOCKERHUB_PASSWORD') }}"
+
+    - name: Pull Docker image
+      command: >
+        docker pull {{ docker_image }}
+      vars:
+        # You can pass the full tag from the GH Actions env
+        # Or hardcode “username/my-nextjs-app:latest”
+        docker_image: "{{ lookup('env','DOCKERHUB_USERNAME') }}/my-nextjs-app:latest"
+
+    - name: Run Docker container
+      command: >
+        docker run -d
+        --name my_nextjs_app
+        -p 3000:3000
+        --restart always
+        {{ docker_image }}
+      vars:
+        docker_image: "{{ lookup('env','DOCKERHUB_USERNAME') }}/my-nextjs-app:latest"

@@ -1,0 +1,8 @@
+services:
+  app:
+    build: ./Code/
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./Code/.env
+    restart: always
