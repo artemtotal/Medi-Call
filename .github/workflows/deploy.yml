@@ -21,17 +21,21 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
+        working-directory: Code
         run: npm ci
 
       - name: Build Next.js application
+        working-directory: Code
         run: npm run build
 
       #  Docker image build and push
       - name: Log in to Docker Hub
+        working-directory: Code
         run: |
           echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
       
       - name: Build Docker image
+        working-directory: Code
         run: |
           docker build \
             -t ${{ secrets.DOCKERHUB_USERNAME }}/my-nextjs-app:${{ github.sha }} \
@@ -39,6 +43,7 @@ jobs:
             .
       
       - name: Push Docker image
+        working-directory: Code
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/my-nextjs-app:${{ github.sha }}
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/my-nextjs-app:latest
@@ -89,6 +94,7 @@ jobs:
           name: tf_outputs
           path: infra/tf_outputs.json
 
+
   # ================= 3) ANSIBLE CONFIGURATION =================
   ansible_config:
     runs-on: ubuntu-latest
@@ -101,6 +107,11 @@ jobs:
           name: tf_outputs
           path: ./  # Download to the root of the workspace
 
+      - name: Set ENV_FILE from secret
+        shell: bash
+        run: |
+          echo "ENV_FILE=${{ secrets.MY_DOTENV_CONTENTS }}" >> $GITHUB_ENV
+          
       - name: Show tf_outputs.json (debug)
         run: cat tf_outputs.json
 

@@ -38,11 +38,19 @@
         # You can pass the full tag from the GH Actions env
         # Or hardcode “username/my-nextjs-app:latest”
         docker_image: "{{ lookup('env','DOCKERHUB_USERNAME') }}/my-nextjs-app:latest"
+    - name: Create .env file
+      copy:
+        content: "{{ lookup('env','ENV_FILE') }}"
+        dest: "/home/ec2-user/.env"
+        owner: ec2-user
+        group: ec2-user
+        mode: '0600'
 
     - name: Run Docker container
       command: >
         docker run -d
         --name my_nextjs_app
+        --env-file /home/ec2-user/.env  
         -p 3000:3000
         --restart always
         {{ docker_image }}

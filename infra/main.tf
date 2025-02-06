@@ -179,19 +179,19 @@ resource "aws_launch_template" "app_lt" {
 
   vpc_security_group_ids = [aws_security_group.instance_sg.id]
 
-  # User data installs Docker, Docker Compose and runs the container
-  user_data = base64encode(<<-EOF
-    #!/bin/bash
-    amazon-linux-extras install docker -y
-    service docker start
-    usermod -a -G docker ec2-user
+  # # User data installs Docker, Docker Compose and runs the container
+  # user_data = base64encode(<<-EOF
+  #   #!/bin/bash
+  #   amazon-linux-extras install docker -y
+  #   service docker start
+  #   usermod -a -G docker ec2-user
 
-    curl -L "https://github.com/docker/compose/releases/download/v2.18.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    chmod +x /usr/local/bin/docker-compose
+  #   curl -L "https://github.com/docker/compose/releases/download/v2.18.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  #   chmod +x /usr/local/bin/docker-compose
 
-    docker run -d -p 3000:3000 c-a-app:latest
-  EOF
-  )
+  #   docker run -d -p 3000:3000 c-a-app:latest
+  # EOF
+  # )
 
   tag_specifications {
     resource_type = "instance"
@@ -227,22 +227,14 @@ resource "aws_autoscaling_group" "app_asg" {
   health_check_grace_period = 300
 }
 
-
-terraform {
-  backend "s3" {
-    # Name of the S3 bucket in which tfstate will be stored
-    bucket = "my-terraform-state-bucket-c-a"
-
-    # Path inside the bucket (it is convenient to organize states into folders)
-    key    = "projects/c-a/terraform.tfstate"
-
-    
-    region = "eu-central-1"
-
-    # # Для блокировок
-    # dynamodb_table = "my-terraform-lock-table"
-
-    # Шифровать state на S3 (True/False)
-    encrypt = true
+data "aws_instances" "asg_instances" {
+  filter {
+    name   = "tag:aws:autoscaling:groupName"
+    values = [aws_autoscaling_group.app_asg.name]
   }
 }
+
+output "public_ips" {
+  value = data.aws_instances.asg_instances.public_ips
+}
+
