@@ -172,6 +172,7 @@ jobs:
 
       - name: Run Ansible Playbook
         shell: bash
+        continue-on-error: true
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
