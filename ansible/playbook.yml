@@ -68,13 +68,18 @@
         group: ec2-user
         mode: '0600'
 
+    - name: Remove existing Docker container if present
+      docker_container:
+        name: my_nextjs_app
+        state: absent
+
     - name: Run Docker container
-      command: >
-        docker run -d
-        --name my_nextjs_app
-        --env-file /home/ec2-user/.env  
-        -p 3000:3000
-        --restart always
-        {{ docker_image }}
-      vars:
-        docker_image: "{{ lookup('env','DOCKERHUB_USERNAME') }}/my-nextjs-app:latest"
+      docker_container:
+        name: my_nextjs_app
+        image: "{{ docker_image }}"
+        env_file: "/home/ec2-user/.env"
+        published_ports:
+          - "3000:3000"
+        restart_policy: always
+        state: started
+
