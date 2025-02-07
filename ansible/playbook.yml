@@ -22,14 +22,25 @@
         enabled: true
 
     # If the image is private on Docker Hub, log in:
+    # - name: Login to Docker Hub
+    #   command: >
+    #     docker login -u "{{ dockerhub_username }}"
+    #     -p "{{ dockerhub_password }}"
+    #   no_log: true
+    #   vars:
+    #     dockerhub_username: "{{ lookup('env','DOCKERHUB_USERNAME') }}"
+    #     dockerhub_password: "{{ lookup('env','DOCKERHUB_PASSWORD') }}"
+
     - name: Login to Docker Hub
-      command: >
-        docker login -u "{{ dockerhub_username }}"
-        -p "{{ dockerhub_password }}"
+      docker_login:
+      registry_url: https://index.docker.io/v1/
+      username: "{{ dockerhub_username }}"
+      password: "{{ dockerhub_password }}"
       no_log: true
       vars:
         dockerhub_username: "{{ lookup('env','DOCKERHUB_USERNAME') }}"
         dockerhub_password: "{{ lookup('env','DOCKERHUB_PASSWORD') }}"
+
 
     - name: Pull Docker image
       command: >
