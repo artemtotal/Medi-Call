@@ -172,6 +172,11 @@ jobs:
 
       - name: Run Ansible Playbook
         shell: bash
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+          ENV_FILE: ${{ secrets.MY_DOTENV_CONTENTS }}
         run: |
           ansible-playbook -i inventory.ini ansible/playbook.yml
+        
 
