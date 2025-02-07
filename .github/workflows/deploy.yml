@@ -93,7 +93,7 @@ jobs:
       - name: Upload TF outputs
     # Save tf_outputs.json as an artifact,
         # to use in the next job (ansible_config).
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: tf_outputs
           path: infra/tf_outputs.json
