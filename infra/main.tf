@@ -15,10 +15,10 @@ terraform {
 resource "aws_dynamodb_table" "terraform_lock" {
   name           = "my-terraform-lock-table"
   billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "c-a"
+  hash_key       = "LockID"
 
   attribute {
-    name = "c-a"
+    name = "LockID"
     type = "S"
   }
 
