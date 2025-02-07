@@ -72,7 +72,28 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: '1.10.5'
+        # Новый шаг для удаления существующих ресурсов
+      - name: Delete existing AWS resources
+        run: |
+          # Удаление таблицы DynamoDB
+          aws dynamodb delete-table --table-name my-terraform-lock-table || true
 
+          # Удаление Load Balancer
+          LB_ARN=$(aws elbv2 describe-load-balancers --names c-a-app-lb --query "LoadBalancers[0].LoadBalancerArn" --output text)
+          if [ -n "$LB_ARN" ]; then
+            aws elbv2 delete-load-balancer --load-balancer-arn "$LB_ARN"
+          fi
+
+          # Удаление Target Group
+          TG_ARN=$(aws elbv2 describe-target-groups --names c-a-app-tg --query "TargetGroups[0].TargetGroupArn" --output text)
+          if [ -n "$TG_ARN" ]; then
+            aws elbv2 delete-target-group --target-group-arn "$TG_ARN"
+          fi
+
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-central-1
       - name: Terraform Init
         working-directory: infra
         run: terraform init
