@@ -33,7 +33,11 @@ jobs:
         working-directory: Code
         run: |
           echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-      
+
+      # do you know docker username? 
+      - name: Debug DockerHub Username
+        run: echo "DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}"
+
       - name: Build Docker image
         working-directory: Code
         run: |
