@@ -105,11 +105,20 @@ jobs:
     needs: [terraform_infra]
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      
+      - name: List current directory contents
+        run: ls -la
+
       - name: Download TF outputs
         uses: actions/download-artifact@v4
         with:
           name: tf_outputs
           path: ./  # Download to the root of the workspace
+
+        
 
       - name: Set ENV_FILE from secret
         shell: bash
