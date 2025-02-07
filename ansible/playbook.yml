@@ -18,19 +18,20 @@
       yum:
         name: "*"
         state: latest
-      when: ansible_os_family == "RedHat"
+      when: ansible_os_family is defined and ansible_os_family == "RedHat"
 
     - name: Install Docker (Amazon Linux)
       yum:
         name: docker
         state: present
-      when: ansible_os_family == "RedHat"
+      when: ansible_os_family is defined and ansible_os_family == "RedHat"
 
     - name: Start and enable Docker service
       service:
         name: docker
         state: started
         enabled: true
+      when: ansible_os_family is defined
 
     # If the image is private on Docker Hub, log in:
     # - name: Login to Docker Hub
@@ -51,6 +52,7 @@
       vars:
         dockerhub_username: "{{ lookup('env','DOCKERHUB_USERNAME') }}"
         dockerhub_password: "{{ lookup('env','DOCKERHUB_PASSWORD') }}"
+      when: ansible_os_family is defined
 
 
     - name: Pull Docker image
@@ -60,6 +62,8 @@
         # You can pass the full tag from the GH Actions env
         # Or hardcode “username/my-nextjs-app:latest”
         docker_image: "{{ lookup('env','DOCKERHUB_USERNAME') }}/my-nextjs-app:latest"
+      when: ansible_os_family is defined
+
     - name: Create .env file
       copy:
         content: "{{ lookup('env','ENV_FILE') }}"
@@ -67,11 +71,13 @@
         owner: ec2-user
         group: ec2-user
         mode: '0600'
+      when: ansible_os_family is defined
 
     - name: Remove existing Docker container if present
       docker_container:
         name: my_nextjs_app
         state: absent
+      when: ansible_os_family is defined
 
     - name: Run Docker container
       docker_container:
@@ -82,4 +88,5 @@
           - "3000:3000"
         restart_policy: always
         state: started
+      when: ansible_os_family is defined
 
