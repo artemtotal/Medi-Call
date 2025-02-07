@@ -6,7 +6,7 @@ terraform {
     bucket         = "my-terraform-state-bucket-c-a"
     key            = "projects/c-a/terraform.tfstate"
     region         = "eu-central-1"
-    dynamodb_table = aws_dynamodb_table.terraform_lock.name
+    dynamodb_table = "my-terraform-lock-table"
     encrypt        = true
   }
 }
@@ -15,10 +15,10 @@ terraform {
 resource "aws_dynamodb_table" "terraform_lock" {
   name           = "my-terraform-lock-table"
   billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "LockID"
+  hash_key       = "c-a"
 
   attribute {
-    name = "LockID"
+    name = "c-a"
     type = "S"
   }
 
