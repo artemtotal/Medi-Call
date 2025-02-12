@@ -126,8 +126,8 @@ resource "aws_security_group" "instance_sg" {
 
   ingress {
     description     = "Allow HTTP from the Load Balancer"
-    from_port       = 3000
-    to_port         = 3000
+    from_port       = 80         # Разрешаем вход на порт 80
+    to_port         = 80
     protocol        = "tcp"
     security_groups = [aws_security_group.lb_sg.id]
   }
@@ -149,6 +149,7 @@ resource "aws_security_group" "instance_sg" {
   }
 }
 
+
 # Create an Application Load Balancer
 resource "aws_lb" "app_lb" {
   name               = "c-a-app-lb"
@@ -165,12 +166,12 @@ resource "aws_lb" "app_lb" {
 # Create a Target Group for the EC2 instances
 resource "aws_lb_target_group" "app_tg" {
   name     = "c-a-app-tg"
-  port     = 3000
+  port     = 80         # Изменили порт с 3000 на 80
   protocol = "HTTP"
   vpc_id   = aws_vpc.main.id
 
   health_check {
-    path                = "/api/health"  # Путь для Health Check
+    path                = "/api/health"  # Убедитесь, что этот путь отвечает 200, либо измените на "/"
     protocol            = "HTTP"
     matcher             = "200"
     interval            = 30
@@ -178,6 +179,7 @@ resource "aws_lb_target_group" "app_tg" {
     unhealthy_threshold = 2
   }
 }
+
 
 # Create a Listener for the Load Balancer
 resource "aws_lb_listener" "app_listener" {
