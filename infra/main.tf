@@ -1,4 +1,6 @@
-# Конфигурация Terraform backend
+
+# Configure Terraform to store state in an S3 bucket (my-terraform-state-bucket)
+# with a DynamoDB table for state locking (my-terraform-lock-table).
 terraform {
   backend "s3" {
     bucket         = "my-terraform-state-bucket-c-a"
@@ -9,7 +11,25 @@ terraform {
   }
 }
 
-# Провайдер AWS
+
+# resource "aws_dynamodb_table" "terraform_lock" {
+#   name           = "my-terraform-lock-table"
+#   billing_mode   = "PAY_PER_REQUEST"
+#   hash_key       = "LockID"
+
+#   attribute {
+#     name = "LockID"
+#     type = "S"
+#   }
+
+#   tags = {
+#     Name = "Terraform Lock Table"
+#   }
+# }
+
+
+
+# Configure the AWS provider
 provider "aws" {
   region  = var.aws_region
   # profile = "Student-345594593042"
@@ -18,13 +38,8 @@ provider "aws" {
   # profile = "Student-345594593042"
 }
 
-# variable "availability_zone_2" {
-#   description = "Second Availability Zone for Load Balancer"
-#   type        = string
-#   default     = "eu-central-1b"
-# }
 
-# Создание VPC
+# Create a VPC
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
   tags = {
@@ -32,7 +47,7 @@ resource "aws_vpc" "main" {
   }
 }
 
-# Создание Internet Gateway
+# Create an Internet Gateway
 resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.main.id
   tags = {
@@ -40,7 +55,7 @@ resource "aws_internet_gateway" "gw" {
   }
 }
 
-# Создание публичных подсетей
+# Create a public subnet
 resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.1.0/24"
@@ -51,17 +66,18 @@ resource "aws_subnet" "public" {
   }
 }
 
+# Neues Subnet in einer anderen AZ hinzufügen
 resource "aws_subnet" "public_2" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.2.0/24"
-  availability_zone       = var.availability_zone_2
+  availability_zone       = var.availability_zone_2  # Zweite AZ
   map_public_ip_on_launch = true
   tags = {
     Name = "c-a-public-subnet-2"
   }
 }
 
-# Таблица маршрутов для публичных подсетей
+# Create a Route Table for public subnet
 resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.main.id
 
@@ -71,6 +87,7 @@ resource "aws_route_table" "public_rt" {
   }
 }
 
+# Associate the Route Table with the public subnet
 resource "aws_route_table_association" "public_assoc_1" {
   subnet_id      = aws_subnet.public.id
   route_table_id = aws_route_table.public_rt.id
@@ -80,8 +97,7 @@ resource "aws_route_table_association" "public_assoc_2" {
   subnet_id      = aws_subnet.public_2.id
   route_table_id = aws_route_table.public_rt.id
 }
-
-# Security Group для Load Balancer
+# Security Group for the Load Balancer
 resource "aws_security_group" "lb_sg" {
   name   = "c-a-lb-sg"
   vpc_id = aws_vpc.main.id
@@ -103,15 +119,15 @@ resource "aws_security_group" "lb_sg" {
   }
 }
 
-# Security Group для EC2 инстансов
+# Security Group for the EC2 instances
 resource "aws_security_group" "instance_sg" {
   name   = "c-a-instance-sg"
   vpc_id = aws_vpc.main.id
 
   ingress {
     description     = "Allow HTTP from the Load Balancer"
-    from_port       = 80
-    to_port         = 80
+    from_port       = 3000
+    to_port         = 3000
     protocol        = "tcp"
     security_groups = [aws_security_group.lb_sg.id]
   }
@@ -133,7 +149,7 @@ resource "aws_security_group" "instance_sg" {
   }
 }
 
-# Создание Application Load Balancer
+# Create an Application Load Balancer
 resource "aws_lb" "app_lb" {
   name               = "c-a-app-lb"
   internal           = false
@@ -146,10 +162,10 @@ resource "aws_lb" "app_lb" {
   }
 }
 
-# Создание Target Group
+# Create a Target Group for the EC2 instances
 resource "aws_lb_target_group" "app_tg" {
   name     = "c-a-app-tg"
-  port     = 80
+  port     = 3000
   protocol = "HTTP"
   vpc_id   = aws_vpc.main.id
 
@@ -163,7 +179,7 @@ resource "aws_lb_target_group" "app_tg" {
   }
 }
 
-# Listener для Load Balancer
+# Create a Listener for the Load Balancer
 resource "aws_lb_listener" "app_listener" {
   load_balancer_arn = aws_lb.app_lb.arn
   port              = "80"
@@ -175,7 +191,7 @@ resource "aws_lb_listener" "app_listener" {
   }
 }
 
-# Launch Template для инстансов
+# Launch Template for application instances
 resource "aws_launch_template" "app_lt" {
   name_prefix   = "c-a-app-lt-"
   image_id      = var.ami_id
@@ -183,10 +199,26 @@ resource "aws_launch_template" "app_lt" {
   key_name      = var.key_pair_name
 
   network_interfaces {
-    device_index                 = 0
-    associate_public_ip_address  = true
+    device_index = 0
+    # subnet_id    = aws_subnet.public.id  # Можно убрать, если используете `vpc_zone_identifier` в ASG
+    associate_public_ip_address = true
     security_groups              = [aws_security_group.instance_sg.id]
   }
+  # vpc_security_group_ids = [aws_security_group.instance_sg.id]
+
+  # # User data installs Docker, Docker Compose and runs the container
+  # user_data = base64encode(<<-EOF
+  #   #!/bin/bash
+  #   amazon-linux-extras install docker -y
+  #   service docker start
+  #   usermod -a -G docker ec2-user
+
+  #   curl -L "https://github.com/docker/compose/releases/download/v2.18.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  #   chmod +x /usr/local/bin/docker-compose
+
+  #   docker run -d -p 3000:3000 c-a-app:latest
+  # EOF
+  # )
 
   tag_specifications {
     resource_type = "instance"
@@ -196,13 +228,13 @@ resource "aws_launch_template" "app_lt" {
   }
 }
 
-# Auto Scaling Group
+# Auto Scaling Group with desired capacity of 3 instances
 resource "aws_autoscaling_group" "app_asg" {
   name                      = "c-a-app-asg"
   max_size                  = 3
   min_size                  = 3
   desired_capacity          = 3
-  vpc_zone_identifier       = [aws_subnet.public.id, aws_subnet.public_2.id]
+  vpc_zone_identifier = [aws_subnet.public.id, aws_subnet.public_2.id]
 
   launch_template {
     id      = aws_launch_template.app_lt.id
@@ -217,15 +249,14 @@ resource "aws_autoscaling_group" "app_asg" {
     propagate_at_launch = true
   }
 
+  # Optional health check configuration
   health_check_type         = "ELB"
   health_check_grace_period = 300
-
-  lifecycle {
+    lifecycle {
     create_before_destroy = true
   }
 }
 
-# Получение публичных IP инстансов
 data "aws_instances" "asg_instances" {
   filter {
     name   = "tag:aws:autoscaling:groupName"
@@ -236,3 +267,4 @@ data "aws_instances" "asg_instances" {
 output "public_ips" {
   value = data.aws_instances.asg_instances.public_ips
 }
+

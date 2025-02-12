@@ -7,9 +7,8 @@ variable "aws_region" {
 variable "ami_id" {
   description = "AMI ID for EC2 instance"
   type        = string
-  default     = "ami-099da3ad959447ffa"  # Amazon Linux 2 AMI
+  default     = "ami-099da3ad959447ffa"
 }
-
 
 variable "availability_zone" {
   description = "Availability zone for the subnet"
@@ -18,9 +17,9 @@ variable "availability_zone" {
 }
 
 variable "availability_zone_2" {
-  description = "Second Availability Zone for Load Balancer"
+  description = "Zweite Availability Zone für Load Balancer"
   type        = string
-  default     = "eu-central-1b"
+  default     = "eu-central-1b"  
 }
 
 
