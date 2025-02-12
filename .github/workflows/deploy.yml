@@ -77,9 +77,9 @@ jobs:
         working-directory: infra
         run: terraform init
 
-      # - name: Terraform Plan
-      #   working-directory: infra
-      #   run: terraform plan -out=plan.tfplan
+      - name: Terraform Plan
+        working-directory: infra
+        run: terraform plan -out=plan.tfplan
 
       - name: Terraform Apply
         working-directory: infra
