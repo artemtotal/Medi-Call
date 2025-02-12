@@ -194,7 +194,13 @@ resource "aws_launch_template" "app_lt" {
   instance_type = var.instance_type
   key_name      = var.key_pair_name
 
-  vpc_security_group_ids = [aws_security_group.instance_sg.id]
+  network_interfaces {
+    device_index = 0
+    subnet_id    = aws_subnet.public.id  # Можно убрать, если используете `vpc_zone_identifier` в ASG
+    associate_public_ip_address = true
+    security_groups = [aws_security_group.instance_sg.id]
+  }
+  # vpc_security_group_ids = [aws_security_group.instance_sg.id]
 
   # # User data installs Docker, Docker Compose and runs the container
   # user_data = base64encode(<<-EOF
