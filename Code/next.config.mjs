@@ -8,6 +8,15 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/sign-in',
+        permanent: false, // Используйте true для постоянного перенаправления (HTTP 301)
+      },
+    ];
+  },
 };
 
 export default nextConfig;

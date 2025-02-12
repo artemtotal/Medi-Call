@@ -1,3 +1,4 @@
+---
 - name: Configure EC2 instances
   hosts: ec2
   ignore_unreachable: true
@@ -6,7 +7,6 @@
     dockerhub_username: "{{ lookup('env', 'DOCKERHUB_USERNAME') }}"
     dockerhub_password: "{{ lookup('env', 'DOCKERHUB_PASSWORD') }}"
     docker_image: "{{ dockerhub_username }}/my-nextjs-app:latest"
-    env_file_content: "{{ lookup('env', 'ENV_FILE') }}"
   tasks:
     - name: Debug variables
       debug:
@@ -14,12 +14,15 @@
           - "dockerhub_username: {{ dockerhub_username }}"
           - "docker_image: {{ docker_image }}"
 
-    - name: Install required packages (Amazon Linux)
+    - name: Update package manager (Amazon Linux)
       yum:
-        name:
-          - docker
-          - python3
-          - python3-pip
+        name: "*"
+        state: latest
+      when: ansible_os_family is defined and ansible_os_family == "RedHat"
+
+    - name: Install Docker (Amazon Linux)
+      yum:
+        name: docker
         state: present
       when: ansible_os_family is defined and ansible_os_family == "RedHat"
 
@@ -51,15 +54,19 @@
         dockerhub_password: "{{ lookup('env','DOCKERHUB_PASSWORD') }}"
       when: ansible_os_family is defined
 
+
     - name: Pull Docker image
-      docker_image:
-        name: "{{ docker_image }}"
-        source: pull
+      command: >
+        docker pull {{ docker_image }}
+      vars:
+        # You can pass the full tag from the GH Actions env
+        # Or hardcode “username/my-nextjs-app:latest”
+        docker_image: "{{ lookup('env','DOCKERHUB_USERNAME') }}/my-nextjs-app:latest"
       when: ansible_os_family is defined
 
     - name: Create .env file
       copy:
-        content: "{{ env_file_content }}"
+        content: "{{ lookup('env','ENV_FILE') }}"
         dest: "/home/ec2-user/.env"
         owner: ec2-user
         group: ec2-user
@@ -78,7 +85,8 @@
         image: "{{ docker_image }}"
         env_file: "/home/ec2-user/.env"
         published_ports:
-          - "80:3000"  # Пробрасываем порт 80 на 3000
+          - "3000:3000"
         restart_policy: always
         state: started
       when: ansible_os_family is defined
+
