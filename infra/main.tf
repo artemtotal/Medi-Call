@@ -18,11 +18,11 @@ provider "aws" {
   # profile = "Student-345594593042"
 }
 
-variable "availability_zone_2" {
-  description = "Second Availability Zone for Load Balancer"
-  type        = string
-  default     = "eu-central-1b"
-}
+# variable "availability_zone_2" {
+#   description = "Second Availability Zone for Load Balancer"
+#   type        = string
+#   default     = "eu-central-1b"
+# }
 
 # Создание VPC
 resource "aws_vpc" "main" {
@@ -235,10 +235,4 @@ data "aws_instances" "asg_instances" {
 
 output "public_ips" {
   value = data.aws_instances.asg_instances.public_ips
-}
-
-# Вывод DNS имени Load Balancer
-output "load_balancer_dns_name" {
-  description = "DNS name of the Application Load Balancer"
-  value       = aws_lb.app_lb.dns_name
 }
