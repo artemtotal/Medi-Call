@@ -13,6 +13,7 @@ import { Textarea } from './ui/textarea';
 import ReactDatePicker from 'react-datepicker';
 import { useToast } from './ui/use-toast';
 import { Input } from './ui/input';
+import { v4 as uuidv4 } from 'uuid';
 
 const initialValues = {
   dateTime: new Date(),
@@ -42,7 +43,10 @@ const MeetingTypeList = () => {
         toast({ title: 'Please select a date and time' });
         return;
       }
-      const id = crypto.randomUUID();
+      
+
+      const id = uuidv4();
+
       console.log("Generated meeting ID:", id);
   
       const call = client.call('default', id);
