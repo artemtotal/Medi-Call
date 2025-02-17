@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, 5-cant-create-meeting-schedule-meetng ]
   pull_request:
     branches: [ main ]
 
