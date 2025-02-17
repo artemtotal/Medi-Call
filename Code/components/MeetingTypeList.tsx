@@ -34,30 +34,27 @@ const MeetingTypeList = () => {
 
   const createMeeting = async () => {
     if (!client || !user) {
-      console.log("Client or user not available", { client, user });
+      console.log("Нет клиента или пользователя", { client, user });
       return;
     }
     try {
-      console.log("Creating meeting with values:", values, "for user:", user);
+      console.log("Начало создания встречи, значения:", values, "для пользователя:", user);
       if (!values.dateTime) {
         toast({ title: 'Please select a date and time' });
         return;
       }
-      
-
-      const id = uuidv4();
-
-      console.log("Generated meeting ID:", id);
+      const id = uuidv4(); // Используем uuidv4 вместо crypto.randomUUID()
+      console.log("Сгенерированный ID встречи:", id);
   
       const call = client.call('default', id);
-      console.log("Call instance:", call);
+      console.log("Получили объект call:", call);
   
       if (!call) {
         throw new Error('Failed to create meeting: call instance is null');
       }
-      const startsAt = values.dateTime.toISOString() || new Date().toISOString();
+      const startsAt = values.dateTime.toISOString();
       const description = values.description || 'Instant Meeting';
-      console.log("Calling getOrCreate with startsAt:", startsAt, "and description:", description);
+      console.log("Запускаем getOrCreate с startsAt:", startsAt, "и description:", description);
   
       const result = await call.getOrCreate({
         data: {
@@ -65,7 +62,7 @@ const MeetingTypeList = () => {
           custom: { description },
         },
       });
-      console.log("getOrCreate result:", result);
+      console.log("Результат getOrCreate:", result);
   
       setCallDetail(call);
       if (!values.description) {
@@ -73,15 +70,15 @@ const MeetingTypeList = () => {
       }
       toast({ title: 'Meeting Created' });
     } catch (error) {
-      console.error("Error in createMeeting:", error);
+      console.error("Ошибка в createMeeting:", error);
       toast({ title: 'Failed to create Meeting' });
     }
   };
-  
 
   if (!client || !user) return <Loader />;
 
   const meetingLink = `${process.env.NEXT_PUBLIC_BASE_URL}/meeting/${callDetail?.id}`;
+  console.log('Meeting Link:', meetingLink);
 
   return (
     <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
