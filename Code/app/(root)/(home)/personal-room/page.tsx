@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useGetCallById } from "@/hooks/useGetCallById";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { useEffect, useState } from "react"
 
 const Table = ({
   title,
@@ -53,7 +54,15 @@ const PersonalRoom = () => {
     router.push(`/meeting/${meetingId}?personal=true`);
   };
 
-  const meetingLink = `${process.env.NEXT_PUBLIC_BASE_URL}/meeting/${meetingId}?personal=true`;
+  
+  const [meetingLink, setMeetingLink] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setMeetingLink(`${window.location.origin}/meeting/${meetingId}?personal=true`);
+    }
+  }, [meetingId]);
+
   console.log('Meeting Link:', meetingLink);
 
 

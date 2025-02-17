@@ -8,8 +8,22 @@ import { Loader } from 'lucide-react';
 
 import { useGetCallById } from '@/hooks/useGetCallById';
 import Alert from '@/components/Alert';
-import MeetingSetup from '@/components/MeetingSetup';
-import MeetingRoom from '@/components/MeetingRoom';
+// import MeetingSetup from '@/components/MeetingSetup';
+// import MeetingRoom from '@/components/MeetingRoom';
+import dynamic from 'next/dynamic';
+
+
+
+const MeetingRoom = dynamic(
+  () => import('@/components/MeetingRoom'),
+  { ssr: false }
+);
+
+
+const MeetingSetup = dynamic(
+  () => import('@/components/MeetingSetup'),
+  { ssr: false }
+);
 
 const MeetingPage = () => {
   const { id } = useParams();

@@ -68,11 +68,19 @@ const MeetingCard = ({
             </Button>
             <Button
               onClick={() => {
-                navigator.clipboard.writeText(link);
-                toast({
-                  title: "Link Copied",
-                });
+                if (navigator && navigator.clipboard) {
+                  navigator.clipboard.writeText(link);
+                  toast({
+                    title: "Link Copied",
+                  });
+                } else {
+                  toast({
+                    title: "Clipboard API not available",
+                    description: "Cannot copy the link.",
+                  });
+                }
               }}
+              
               className="bg-dark-4 px-6"
             >
               <Image

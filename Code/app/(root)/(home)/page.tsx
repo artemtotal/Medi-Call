@@ -1,5 +1,10 @@
-import MeetingTypeList from '@/components/MeetingTypeList';
+// import MeetingTypeList from '@/components/MeetingTypeList';
+import dynamic from 'next/dynamic';
 
+const MeetingTypeList = dynamic(
+  () => import('@/components/MeetingTypeList'),
+  { ssr: false }
+);
 const Home = () => {
   const now = new Date();
 

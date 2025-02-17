@@ -86,10 +86,11 @@ const CallList = ({ type }: { type: 'ended' | 'upcoming' | 'recordings' }) => {
               (meeting as CallRecording).start_time?.toLocaleString()
             }
             isPreviousMeeting={type === 'ended'}
-            link={
+            link={            
               type === 'recordings'
                 ? (meeting as CallRecording).url
-                : `${process.env.NEXT_PUBLIC_BASE_URL}/meeting/${(meeting as Call).id}`
+                : `/meeting/${(meeting as Call).id}`
+            
             }
             buttonIcon1={type === 'recordings' ? '/icons/play.svg' : undefined}
             buttonText={type === 'recordings' ? 'Play' : 'Start'}

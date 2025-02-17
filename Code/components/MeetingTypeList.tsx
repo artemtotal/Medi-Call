@@ -14,6 +14,7 @@ import ReactDatePicker from 'react-datepicker';
 import { useToast } from './ui/use-toast';
 import { Input } from './ui/input';
 import { v4 as uuidv4 } from 'uuid';
+import { useEffect, useState } from "react";
 
 const initialValues = {
   dateTime: new Date(),
@@ -77,8 +78,17 @@ const MeetingTypeList = () => {
 
   if (!client || !user) return <Loader />;
 
-  const meetingLink = `${process.env.NEXT_PUBLIC_BASE_URL}/meeting/${callDetail?.id}`;
+  const [meetingLink, setMeetingLink] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && callDetail?.id) {
+      setMeetingLink(`${window.location.origin}/meeting/${callDetail.id}`);
+    }
+  }, [callDetail]);
+  
   console.log('Meeting Link:', meetingLink);
+  
+  
 
   return (
     <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
