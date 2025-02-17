@@ -1,3 +1,4 @@
+"use client";
 import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { Call, useStreamVideoClient } from '@stream-io/video-react-sdk';
@@ -17,7 +18,7 @@ export const useGetCalls = () => {
       try {
         // https://getstream.io/video/docs/react/guides/querying-calls/#filters
         const { calls } = await client.queryCalls({
-          sort: [{ field: 'starts_at', direction: -1 }],
+          sort: [{ field: 'starts_at', direction: -1 }],   // Sortierung nach Startzeitpunkt absteigend
           filter_conditions: {
             starts_at: { $exists: true },
             $or: [
@@ -46,7 +47,10 @@ export const useGetCalls = () => {
 
   const upcomingCalls = calls?.filter(({ state: { startsAt } }: Call) => {
     return startsAt && new Date(startsAt) > now
-  })
+  });
 
-  return { endedCalls, upcomingCalls, callRecordings: calls, isLoading }
+  // **Hier holen wir das nächste Meeting**
+const nextMeeting = upcomingCalls?.length ? upcomingCalls[0] : null;
+
+  return { endedCalls, upcomingCalls, callRecordings: calls, nextMeeting, isLoading }
 };
