@@ -191,6 +191,7 @@ jobs:
         run: |
           echo "LB_DNS is: ${{ env.LB_DNS }}"
         
+          
       # - name: Create variables file
       #   run: |
       #     echo "dockerhub_username: '${{ secrets.DOCKERHUB_USERNAME }}'" > variables.yml
