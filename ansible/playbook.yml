@@ -3,11 +3,11 @@
   ignore_unreachable: true
   become: true
   vars:
-    # dockerhub_username: "{{ lookup('env', 'DOCKERHUB_USERNAME') }}"
-    # dockerhub_password: "{{ lookup('env', 'DOCKERHUB_PASSWORD') }}"
+    dockerhub_username: "{{ lookup('env', 'DOCKERHUB_USERNAME') }}"
+    dockerhub_password: "{{ lookup('env', 'DOCKERHUB_PASSWORD') }}"
     docker_image: "{{ dockerhub_username }}/my-nextjs-app:latest"
-    # env_file_content: "{{ lookup('env', 'ENV_FILE') }}"
-    # lb_dns: "{{ lookup('env', 'LB_DNS') }}"
+    env_file_content: "{{ lookup('env', 'ENV_FILE') }}"
+    lb_dns: "{{ lookup('env', 'LB_DNS') }}"
   tasks:
     - name: Debug variables
       debug:
@@ -69,24 +69,24 @@
 
     - name: Create .env file
       copy:
-        # content: "{{ env_file_content }}"
+        content: "{{ env_file_content }}"
         dest: "/home/ec2-user/.env"
         owner: ec2-user
         group: ec2-user
         mode: '0600'
-        content: |
-          {% for key, value in env_variables.items() %}
-          {{ key }}={{ value }}
-          {% endfor %}
-          NEXT_PUBLIC_BASE_URL={{ lb_dns }}
+        # content: |
+        #   {% for key, value in env_variables.items() %}
+        #   {{ key }}={{ value }}
+        #   {% endfor %}
+        #   NEXT_PUBLIC_BASE_URL={{ lb_dns }}
       when: ansible_os_family is defined
 
-    # - name: Append NEXT_PUBLIC_BASE_URL to .env file
-    #   lineinfile:
-    #     path: "/home/ec2-user/.env"
-    #     line: "NEXT_PUBLIC_BASE_URL={{ lb_dns }}"
-    #     create: yes
-    #   when: ansible_os_family is defined
+    - name: Append NEXT_PUBLIC_BASE_URL to .env file
+      lineinfile:
+        path: "/home/ec2-user/.env"
+        line: "NEXT_PUBLIC_BASE_URL={{ lb_dns }}"
+        create: yes
+      when: ansible_os_family is defined
 
     - name: Remove existing Docker container if present
       docker_container:

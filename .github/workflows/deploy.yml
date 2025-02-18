@@ -124,7 +124,10 @@ jobs:
       - name: Set ENV_FILE from secret
         shell: bash
         run: |
-          echo "ENV_FILE=${{ secrets.MY_DOTENV_CONTENTS }}" >> $GITHUB_ENV
+          echo "ENV_FILE<<EOF" >> $GITHUB_ENV
+          echo "${{ secrets.MY_DOTENV_CONTENTS }}" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+        
 
       - name: Extract Load Balancer DNS
         run: |
@@ -207,6 +210,12 @@ jobs:
       - name: Run Ansible Playbook
         shell: bash
         continue-on-error: true
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+          ENV_FILE: ${{ env.ENV_FILE }}
+          LB_DNS: ${{ env.LB_DNS }}
         run: |
-          ansible-playbook -i inventory.ini ansible/playbook.yml -e "@variables.yml"
+          ansible-playbook -i inventory.ini ansible/playbook.yml
+      
 
