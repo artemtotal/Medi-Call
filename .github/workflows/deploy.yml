@@ -191,9 +191,18 @@ jobs:
         run: |
           echo "dockerhub_username: '${{ secrets.DOCKERHUB_USERNAME }}'" > variables.yml
           echo "dockerhub_password: '${{ secrets.DOCKERHUB_PASSWORD }}'" >> variables.yml
-          echo "env_file_content: '${{ secrets.MY_DOTENV_CONTENTS }}'" >> variables.yml
           echo "lb_dns: '${{ env.LB_DNS }}'" >> variables.yml
+      
+          # Добавляем все переменные среды
+          echo "env_variables:" >> variables.yml
+          echo "  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: '${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}'" >> variables.yml
+          echo "  CLERK_SECRET_KEY: '${{ secrets.CLERK_SECRET_KEY }}'" >> variables.yml
+          echo "  NEXT_PUBLIC_CLERK_SIGN_IN_URL: '${{ secrets.NEXT_PUBLIC_CLERK_SIGN_IN_URL }}'" >> variables.yml
+          echo "  NEXT_PUBLIC_CLERK_SIGN_UP_URL: '${{ secrets.NEXT_PUBLIC_CLERK_SIGN_UP_URL }}'" >> variables.yml
+          echo "  NEXT_PUBLIC_STREAM_API_KEY: '${{ secrets.NEXT_PUBLIC_STREAM_API_KEY }}'" >> variables.yml
+          echo "  STREAM_SECRET_KEY: '${{ secrets.STREAM_SECRET_KEY }}'" >> variables.yml
         shell: bash
+        
 
       - name: Run Ansible Playbook
         shell: bash

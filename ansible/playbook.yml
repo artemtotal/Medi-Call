@@ -14,6 +14,9 @@
         msg:
           - "dockerhub_username: {{ dockerhub_username }}"
           - "docker_image: {{ docker_image }}"
+          - "lb_dns: {{ lb_dns }}"
+          - "env_variables: {{ env_variables }}"
+
 
     - name: Debug lb_dns variable
       debug:
@@ -66,19 +69,24 @@
 
     - name: Create .env file
       copy:
-        content: "{{ env_file_content }}"
+        # content: "{{ env_file_content }}"
         dest: "/home/ec2-user/.env"
         owner: ec2-user
         group: ec2-user
         mode: '0600'
+        content: |
+          {% for key, value in env_variables.items() %}
+          {{ key }}={{ value }}
+          {% endfor %}
+          NEXT_PUBLIC_BASE_URL={{ lb_dns }}
       when: ansible_os_family is defined
 
-    - name: Append NEXT_PUBLIC_BASE_URL to .env file
-      lineinfile:
-        path: "/home/ec2-user/.env"
-        line: "NEXT_PUBLIC_BASE_URL={{ lb_dns }}"
-        create: yes
-      when: ansible_os_family is defined
+    # - name: Append NEXT_PUBLIC_BASE_URL to .env file
+    #   lineinfile:
+    #     path: "/home/ec2-user/.env"
+    #     line: "NEXT_PUBLIC_BASE_URL={{ lb_dns }}"
+    #     create: yes
+    #   when: ansible_os_family is defined
 
     - name: Remove existing Docker container if present
       docker_container:
