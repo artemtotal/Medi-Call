@@ -128,7 +128,8 @@ jobs:
 
       - name: Extract Load Balancer DNS
         run: |
-          LB_DNS=$(jq -r '.load_balancer_dns.value' tf_outputs.json)
+          LB_DNS=$(jq -r '.load_balancer_dns_name.value' tf_outputs.json)
+          echo "LB_DNS=${LB_DNS}"
           echo "LB_DNS=${LB_DNS}" >> $GITHUB_ENV
         shell: bash
 
@@ -186,15 +187,17 @@ jobs:
         run: |
           echo "LB_DNS is: ${{ env.LB_DNS }}"
         
+      - name: Create variables file
+        run: |
+          echo "dockerhub_username: '${{ secrets.DOCKERHUB_USERNAME }}'" > variables.yml
+          echo "dockerhub_password: '${{ secrets.DOCKERHUB_PASSWORD }}'" >> variables.yml
+          echo "env_file_content: '${{ secrets.MY_DOTENV_CONTENTS }}'" >> variables.yml
+          echo "lb_dns: '${{ env.LB_DNS }}'" >> variables.yml
+        shell: bash
+
       - name: Run Ansible Playbook
         shell: bash
         continue-on-error: true
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-          ENV_FILE: ${{ secrets.MY_DOTENV_CONTENTS }}
         run: |
-          ansible-playbook -i inventory.ini ansible/playbook.yml --extra-vars "lb_dns=${{ env.LB_DNS }}"
-      
-      
+          ansible-playbook -i inventory.ini ansible/playbook.yml -e "@variables.yml"
 

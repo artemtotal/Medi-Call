@@ -3,10 +3,10 @@
   ignore_unreachable: true
   become: true
   vars:
-    dockerhub_username: "{{ lookup('env', 'DOCKERHUB_USERNAME') }}"
-    dockerhub_password: "{{ lookup('env', 'DOCKERHUB_PASSWORD') }}"
+    # dockerhub_username: "{{ lookup('env', 'DOCKERHUB_USERNAME') }}"
+    # dockerhub_password: "{{ lookup('env', 'DOCKERHUB_PASSWORD') }}"
     docker_image: "{{ dockerhub_username }}/my-nextjs-app:latest"
-    env_file_content: "{{ lookup('env', 'ENV_FILE') }}"
+    # env_file_content: "{{ lookup('env', 'ENV_FILE') }}"
     # lb_dns: "{{ lookup('env', 'LB_DNS') }}"
   tasks:
     - name: Debug variables
@@ -53,9 +53,9 @@
         username: "{{ dockerhub_username }}"
         password: "{{ dockerhub_password }}"
       #  no_log: true
-      vars:
-        dockerhub_username: "{{ lookup('env','DOCKERHUB_USERNAME') }}"
-        dockerhub_password: "{{ lookup('env','DOCKERHUB_PASSWORD') }}"
+      # vars:
+      #   dockerhub_username: "{{ lookup('env','DOCKERHUB_USERNAME') }}"
+      #   dockerhub_password: "{{ lookup('env','DOCKERHUB_PASSWORD') }}"
       when: ansible_os_family is defined
 
     - name: Pull Docker image
