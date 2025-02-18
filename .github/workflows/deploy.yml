@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, origin/7-cant-create-schedule-meeting, 7-cant-create-schedule-meeting ]
   pull_request:
     branches: [ main ]
 
