@@ -2,11 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-<<<<<<< HEAD
     branches: [ main, origin/7-cant-create-schedule-meeting, 7-cant-create-schedule-meeting ]
-=======
-    branches: [ main, 10-https-zu-http-ändern ]
->>>>>>> e8115e31f44457ad541b3f27fd4aeaf1bf5922fb
   pull_request:
     branches: [ main ]
 
@@ -15,6 +11,7 @@ jobs:
   # ================= 1) BUILD & PUSH DOCKER IMAGE TO DOCKER HUB =================
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -32,11 +29,13 @@ jobs:
         working-directory: Code
         run: npm run build
 
+      #  Docker image build and push
       - name: Log in to Docker Hub
         working-directory: Code
         run: |
           echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
+      # do you know docker username? 
       - name: Debug DockerHub Username
         run: echo "DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}"
 
@@ -47,7 +46,7 @@ jobs:
             -t ${{ secrets.DOCKERHUB_USERNAME }}/my-nextjs-app:${{ github.sha }} \
             -t ${{ secrets.DOCKERHUB_USERNAME }}/my-nextjs-app:latest \
             .
-
+      
       - name: Push Docker image
         working-directory: Code
         run: |
@@ -57,7 +56,8 @@ jobs:
   # ================= 2) TERRAFORM INFRASTRUCTURE =================
   terraform_infra:
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [build]  # First we wait for the image to assemble
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -84,27 +84,45 @@ jobs:
 
       - name: Terraform Apply
         working-directory: infra
-        run: terraform apply -auto-approve
+        run: terraform apply -target=aws_acm_certificate.cert -auto-approve
 
+      - name: Get Certificate Validation Options
+        working-directory: infra
+        id: get_validation_options
+        run: |
+          terraform output -json acm_certificate_domain_validation_options > validation_options.json
+          cat validation_options.json
+  
+      - name: Upload Validation Options
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation_options
+          path: infra/validation_options.json
+          
       - name: Terraform Output (JSON)
         id: tf_output
         working-directory: infra
         run: terraform output -json > tf_outputs.json
 
       - name: Upload TF outputs
+    # Save tf_outputs.json as an artifact,
+        # to use in the next job (ansible_config).
         uses: actions/upload-artifact@v4
         with:
           name: tf_outputs
           path: infra/tf_outputs.json
 
+
   # ================= 3) ANSIBLE CONFIGURATION =================
   ansible_config:
     runs-on: ubuntu-latest
     needs: [terraform_infra]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      
       - name: List current directory contents
         run: ls -la
 
@@ -112,7 +130,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: tf_outputs
-          path: ./
+          path: ./  # Download to the root of the workspace
+
+        
 
       - name: Set ENV_FILE from secret
         shell: bash
@@ -120,7 +140,6 @@ jobs:
           echo "ENV_FILE<<EOF" >> $GITHUB_ENV
           echo "${{ secrets.MY_DOTENV_CONTENTS }}" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-<<<<<<< HEAD
         
         
 
@@ -136,19 +155,6 @@ jobs:
 
 
           
-=======
-
-      - name: Extract instance public IP
-        run: |
-          PUBLIC_IP=$(jq -r '.public_ip.value' tf_outputs.json)
-          echo "PUBLIC_IP=${PUBLIC_IP}"
-          echo "PUBLIC_IP=${PUBLIC_IP}" >> $GITHUB_ENV
-        shell: bash
-
-      - name: Debug PUBLIC_IP
-        run: echo "PUBLIC_IP=${{ env.PUBLIC_IP }}"
-
->>>>>>> e8115e31f44457ad541b3f27fd4aeaf1bf5922fb
       - name: Show tf_outputs.json (debug)
         run: cat tf_outputs.json
 
@@ -156,11 +162,30 @@ jobs:
         id: create_inventory
         shell: bash
         run: |
+          # Assume we have output “public_ips” (array of IPs) in Terraform
+          # Example:
+          # output “public_ips” {
+          # value = data.aws_instances.asg_instances.public_ips
+          # }
+          # Or manually output the IPs in “public_ips”
+          # 
+          # Extract the IP list into a bash array
+          
+          PUBLIC_IPS=$(jq -r '.public_ips.value[]' tf_outputs.json)
+          echo "Found IPs:"
+          echo "$PUBLIC_IPS"
+          
+          # Let's generate the inventory.ini file
           echo "[ec2]" > inventory.ini
-          echo "${{ env.PUBLIC_IP }} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/id_rsa" >> inventory.ini
+          for IP in $PUBLIC_IPS; do
+            echo "${IP} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/id_rsa" >> inventory.ini
+          done
+
           echo "" >> inventory.ini
           echo "[ec2:vars]" >> inventory.ini
           echo "ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> inventory.ini
+          
+          echo "==============================="
           cat inventory.ini
 
       - name: Install Ansible and jq
@@ -179,7 +204,7 @@ jobs:
         run: |
           echo "LB_DNS is: ${{ env.LB_DNS }}"
         
-          
+
       # - name: Create variables file
       #   run: |
       #     echo "dockerhub_username: '${{ secrets.DOCKERHUB_USERNAME }}'" > variables.yml
@@ -197,10 +222,6 @@ jobs:
       #   shell: bash
         
 
-      - name: Echo PUBLIC_IP before Ansible
-        run: |
-            echo "PUBLIC_IP is: ${{ env.PUBLIC_IP }}"
-
       - name: Run Ansible Playbook
         shell: bash
         continue-on-error: true
@@ -208,15 +229,8 @@ jobs:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
           ENV_FILE: ${{ env.ENV_FILE }}
-<<<<<<< HEAD
           LB_DNS: ${{ env.LB_DNS }}
         run: |
           ansible-playbook -i inventory.ini ansible/playbook.yml
       
 
-=======
-          # Используем PUBLIC_IP для формирования базового URL с протоколом http
-          LB_DNS: "http://${{ env.PUBLIC_IP }}"
-        run: |
-          ansible-playbook -i inventory.ini ansible/playbook.yml
->>>>>>> e8115e31f44457ad541b3f27fd4aeaf1bf5922fb
