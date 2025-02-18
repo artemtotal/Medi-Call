@@ -7,17 +7,18 @@
     dockerhub_password: "{{ lookup('env', 'DOCKERHUB_PASSWORD') }}"
     docker_image: "{{ dockerhub_username }}/my-nextjs-app:latest"
     env_file_content: "{{ lookup('env', 'ENV_FILE') }}"
-    lb_dns: "{{ lookup('env', 'LB_DNS') }}"
+    # lb_dns: "{{ lookup('env', 'LB_DNS') }}"
   tasks:
     - name: Debug variables
       debug:
         msg:
           - "dockerhub_username: {{ dockerhub_username }}"
           - "docker_image: {{ docker_image }}"
-          
+
     - name: Debug lb_dns variable
       debug:
         msg: "lb_dns: {{ lb_dns }}"
+
 
 
     - name: Install required packages (Amazon Linux)

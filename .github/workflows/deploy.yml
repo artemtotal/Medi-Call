@@ -6,6 +6,7 @@ on:
   pull_request:
     branches: [ main ]
 
+
 jobs:
   # ================= 1) BUILD & PUSH DOCKER IMAGE TO DOCKER HUB =================
   build:
@@ -130,10 +131,10 @@ jobs:
           LB_DNS=$(jq -r '.load_balancer_dns.value' tf_outputs.json)
           echo "LB_DNS=${LB_DNS}" >> $GITHUB_ENV
         shell: bash
-        
+
       - name: Debug LB_DNS
-        run: echo "LB_DNS=$LB_DNS"
-        shell: bash
+        run: echo "LB_DNS=${{ env.LB_DNS }}"
+
 
           
       - name: Show tf_outputs.json (debug)
@@ -180,7 +181,11 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.MY_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-
+      
+      - name: Echo LB_DNS before Ansible
+        run: |
+          echo "LB_DNS is: ${{ env.LB_DNS }}"
+        
       - name: Run Ansible Playbook
         shell: bash
         continue-on-error: true
@@ -188,8 +193,8 @@ jobs:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
           ENV_FILE: ${{ secrets.MY_DOTENV_CONTENTS }}
-          LB_DNS: ${{ env.LB_DNS }}
         run: |
-          ansible-playbook -i inventory.ini ansible/playbook.yml
-        
+          ansible-playbook -i inventory.ini ansible/playbook.yml --extra-vars "lb_dns=${{ env.LB_DNS }}"
+      
+      
 
