@@ -130,6 +130,10 @@ jobs:
           LB_DNS=$(jq -r '.load_balancer_dns.value' tf_outputs.json)
           echo "LB_DNS=${LB_DNS}" >> $GITHUB_ENV
         shell: bash
+        
+      - name: Debug LB_DNS
+        run: echo "LB_DNS=$LB_DNS"
+        shell: bash
 
           
       - name: Show tf_outputs.json (debug)
