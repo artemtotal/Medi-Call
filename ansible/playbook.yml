@@ -7,12 +7,22 @@
     dockerhub_password: "{{ lookup('env', 'DOCKERHUB_PASSWORD') }}"
     docker_image: "{{ dockerhub_username }}/my-nextjs-app:latest"
     env_file_content: "{{ lookup('env', 'ENV_FILE') }}"
+    lb_dns: "{{ lookup('env', 'LB_DNS') }}"
   tasks:
     - name: Debug variables
       debug:
         msg:
           - "dockerhub_username: {{ dockerhub_username }}"
           - "docker_image: {{ docker_image }}"
+          - "lb_dns: {{ lb_dns }}"
+          # - "env_variables: {{ env_variables }}"
+
+
+    # - name: Debug lb_dns variable
+    #   debug:
+    #     msg: "lb_dns: {{ lb_dns }}"
+
+
 
     - name: Install required packages (Amazon Linux)
       yum:
@@ -46,9 +56,9 @@
         username: "{{ dockerhub_username }}"
         password: "{{ dockerhub_password }}"
       #  no_log: true
-      vars:
-        dockerhub_username: "{{ lookup('env','DOCKERHUB_USERNAME') }}"
-        dockerhub_password: "{{ lookup('env','DOCKERHUB_PASSWORD') }}"
+      # vars:
+      #   dockerhub_username: "{{ lookup('env','DOCKERHUB_USERNAME') }}"
+      #   dockerhub_password: "{{ lookup('env','DOCKERHUB_PASSWORD') }}"
       when: ansible_os_family is defined
 
     - name: Pull Docker image
@@ -64,6 +74,20 @@
         owner: ec2-user
         group: ec2-user
         mode: '0600'
+        # content: |
+        #   {% for key, value in env_variables.items() %}
+        #   {{ key }}={{ value }}
+        #   {% endfor %}
+        #   NEXT_PUBLIC_BASE_URL={{ lb_dns }}
+      when: ansible_os_family is defined
+
+    - name: Append NEXT_PUBLIC_BASE_URL to .env file
+      lineinfile:
+        path: "/home/ec2-user/.env"
+        line: "NEXT_PUBLIC_BASE_URL={{ lb_dns }}" 
+        # line: "NEXT_PUBLIC_BASE_URL=https://medicall.cfd"
+        # https 
+        create: yes
       when: ansible_os_family is defined
 
     - name: Remove existing Docker container if present
