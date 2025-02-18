@@ -2,9 +2,10 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, origin/7-cant-create-schedule-meeting, 7-cant-create-schedule-meeting ]
   pull_request:
     branches: [ main ]
+
 
 jobs:
   # ================= 1) BUILD & PUSH DOCKER IMAGE TO DOCKER HUB =================
@@ -123,7 +124,23 @@ jobs:
       - name: Set ENV_FILE from secret
         shell: bash
         run: |
-          echo "ENV_FILE=${{ secrets.MY_DOTENV_CONTENTS }}" >> $GITHUB_ENV
+          echo "ENV_FILE<<EOF" >> $GITHUB_ENV
+          echo "${{ secrets.MY_DOTENV_CONTENTS }}" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+        
+        
+
+      - name: Extract Load Balancer DNS
+        run: |
+          LB_DNS=$(jq -r '.load_balancer_dns_name.value' tf_outputs.json)
+          echo "LB_DNS=${LB_DNS}"
+          echo "LB_DNS=${LB_DNS}" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Debug LB_DNS
+        run: echo "LB_DNS=${{ env.LB_DNS }}"
+
+
           
       - name: Show tf_outputs.json (debug)
         run: cat tf_outputs.json
@@ -158,10 +175,10 @@ jobs:
           echo "==============================="
           cat inventory.ini
 
-      - name: Install Ansible
+      - name: Install Ansible and jq
         run: |
           sudo apt-get update
-          sudo apt-get install -y ansible
+          sudo apt-get install -y ansible jq
 
       - name: Prepare SSH Key
         shell: bash
@@ -169,6 +186,28 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.MY_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+      
+      - name: Echo LB_DNS before Ansible
+        run: |
+          echo "LB_DNS is: ${{ env.LB_DNS }}"
+        
+          
+      # - name: Create variables file
+      #   run: |
+      #     echo "dockerhub_username: '${{ secrets.DOCKERHUB_USERNAME }}'" > variables.yml
+      #     echo "dockerhub_password: '${{ secrets.DOCKERHUB_PASSWORD }}'" >> variables.yml
+      #     echo "lb_dns: '${{ env.LB_DNS }}'" >> variables.yml
+      
+      #     # Добавляем все переменные среды
+      #     echo "env_variables:" >> variables.yml
+      #     echo "  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: '${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}'" >> variables.yml
+      #     echo "  CLERK_SECRET_KEY: '${{ secrets.CLERK_SECRET_KEY }}'" >> variables.yml
+      #     echo "  NEXT_PUBLIC_CLERK_SIGN_IN_URL: '${{ secrets.NEXT_PUBLIC_CLERK_SIGN_IN_URL }}'" >> variables.yml
+      #     echo "  NEXT_PUBLIC_CLERK_SIGN_UP_URL: '${{ secrets.NEXT_PUBLIC_CLERK_SIGN_UP_URL }}'" >> variables.yml
+      #     echo "  NEXT_PUBLIC_STREAM_API_KEY: '${{ secrets.NEXT_PUBLIC_STREAM_API_KEY }}'" >> variables.yml
+      #     echo "  STREAM_SECRET_KEY: '${{ secrets.STREAM_SECRET_KEY }}'" >> variables.yml
+      #   shell: bash
+        
 
       - name: Run Ansible Playbook
         shell: bash
@@ -176,8 +215,9 @@ jobs:
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-          ENV_FILE: ${{ secrets.MY_DOTENV_CONTENTS }}
+          ENV_FILE: ${{ env.ENV_FILE }}
+          LB_DNS: ${{ env.LB_DNS }}
         run: |
           ansible-playbook -i inventory.ini ansible/playbook.yml
-        
+      
 
