@@ -15,12 +15,12 @@
           - "dockerhub_username: {{ dockerhub_username }}"
           - "docker_image: {{ docker_image }}"
           - "lb_dns: {{ lb_dns }}"
-          - "env_variables: {{ env_variables }}"
+          # - "env_variables: {{ env_variables }}"
 
 
-    - name: Debug lb_dns variable
-      debug:
-        msg: "lb_dns: {{ lb_dns }}"
+    # - name: Debug lb_dns variable
+    #   debug:
+    #     msg: "lb_dns: {{ lb_dns }}"
 
 
 
