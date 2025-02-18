@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, origin/7-cant-create-schedule-meeting, 7-cant-create-schedule-meeting ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -153,7 +153,8 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
 
       - name: Echo PUBLIC_IP before Ansible
-        run: echo "PUBLIC_IP is: ${{ env.PUBLIC_IP }}"
+        run: |
+            echo "PUBLIC_IP is: ${{ env.PUBLIC_IP }}"
 
       - name: Run Ansible Playbook
         shell: bash
