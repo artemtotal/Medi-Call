@@ -124,6 +124,13 @@ jobs:
         shell: bash
         run: |
           echo "ENV_FILE=${{ secrets.MY_DOTENV_CONTENTS }}" >> $GITHUB_ENV
+
+      - name: Extract Load Balancer DNS
+        run: |
+          LB_DNS=$(jq -r '.load_balancer_dns.value' tf_outputs.json)
+          echo "LB_DNS=${LB_DNS}" >> $GITHUB_ENV
+        shell: bash
+
           
       - name: Show tf_outputs.json (debug)
         run: cat tf_outputs.json
@@ -158,10 +165,10 @@ jobs:
           echo "==============================="
           cat inventory.ini
 
-      - name: Install Ansible
+      - name: Install Ansible and jq
         run: |
           sudo apt-get update
-          sudo apt-get install -y ansible
+          sudo apt-get install -y ansible jq
 
       - name: Prepare SSH Key
         shell: bash
@@ -177,6 +184,7 @@ jobs:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
           ENV_FILE: ${{ secrets.MY_DOTENV_CONTENTS }}
+          LB_DNS: ${{ env.LB_DNS }}
         run: |
           ansible-playbook -i inventory.ini ansible/playbook.yml
         

@@ -66,6 +66,13 @@
         mode: '0600'
       when: ansible_os_family is defined
 
+    - name: Append NEXT_PUBLIC_BASE_URL to .env file
+      lineinfile:
+        path: "/home/ec2-user/.env"
+        line: "NEXT_PUBLIC_BASE_URL={{ lb_dns }}"
+        create: yes
+      when: ansible_os_family is defined
+
     - name: Remove existing Docker container if present
       docker_container:
         name: my_nextjs_app
