@@ -33,16 +33,24 @@ const MeetingTypeList = () => {
   const { user } = useUser();
   const { toast } = useToast();
 
-  const [meetingLink, setMeetingLink] = useState('');
+  const [meetingLink] = useState('');
 
+  // useEffect(() => {
+  //   if (typeof window !== 'undefined' && callDetail?.id) {
+  //     setMeetingLink(`${window.location.origin}/meeting/${callDetail.id}`);
+  //   }
+  // }, [callDetail]);
   useEffect(() => {
-    if (typeof window !== 'undefined' && callDetail?.id) {
-      setMeetingLink(`${window.location.origin}/meeting/${callDetail.id}`);
+    if (typeof window !== 'undefined') {
+      console.log('window.location.origin:', window.location.origin);
+    }
+    if (callDetail) {
+      console.log('callDetail:', callDetail);
     }
   }, [callDetail]);
   
   console.log('Meeting Link:', meetingLink);
-  
+
   const createMeeting = async () => {
     if (!client || !user) {
       console.log("Нет клиента или пользователя", { client, user });

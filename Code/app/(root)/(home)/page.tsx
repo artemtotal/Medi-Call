@@ -1,3 +1,4 @@
+'use client';
 // import MeetingTypeList from '@/components/MeetingTypeList';
 import dynamic from 'next/dynamic';
 

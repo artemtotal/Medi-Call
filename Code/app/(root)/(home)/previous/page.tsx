@@ -1,3 +1,5 @@
+'use client';
+
 import CallList from "@/components/CallList";
 
 const PreviousPage = () => {

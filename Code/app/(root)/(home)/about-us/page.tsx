@@ -1,3 +1,4 @@
+'use client';
 export default function AboutUsPage() {
   return (
     <main className="min-h-screen space-y-8 bg-gray-900 p-8 text-white">
