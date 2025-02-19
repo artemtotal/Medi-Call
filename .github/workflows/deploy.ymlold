@@ -2,9 +2,10 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, 15-avatars ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
+
 
 jobs:
   # ================= 1) BUILD & PUSH DOCKER IMAGE TO DOCKER HUB =================
@@ -77,9 +78,11 @@ jobs:
         working-directory: infra
         run: terraform plan -var "acm_certificate_arn=arn:aws:acm:eu-central-1:345594593042:certificate/bc7393f9-5324-49c7-8f5f-74c1a5cfe42a" -out=plan.tfplan
 
+
       - name: Terraform Apply
         working-directory: infra
         run: terraform apply -auto-approve plan.tfplan
+      
 
       - name: Terraform Output (JSON)
         id: tf_output
@@ -115,6 +118,7 @@ jobs:
           echo "ENV_FILE<<EOF" >> $GITHUB_ENV
           echo "${{ secrets.MY_DOTENV_CONTENTS }}" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
+     
 
       - name: Extract Load Balancer DNS
         run: |
@@ -125,7 +129,7 @@ jobs:
 
       - name: Debug LB_DNS
         run: echo "LB_DNS=${{ env.LB_DNS }}"
-
+        
       - name: Show tf_outputs.json (debug)
         run: cat tf_outputs.json
 
@@ -151,10 +155,30 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.MY_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-
+      
       - name: Echo LB_DNS before Ansible
         run: |
           echo "LB_DNS is: ${{ env.LB_DNS }}"
+        
+          
+      # - name: Create variables file
+      #   run: |
+      #     echo "dockerhub_username: '${{ secrets.DOCKERHUB_USERNAME }}'" > variables.yml
+      #     echo "dockerhub_password: '${{ secrets.DOCKERHUB_PASSWORD }}'" >> variables.yml
+      #     echo "lb_dns: '${{ env.LB_DNS }}'" >> variables.yml
+      
+      #     # Добавляем все переменные среды
+      #     echo "env_variables:" >> variables.yml
+      #     echo "  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: '${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}'" >> variables.yml
+      #     echo "  CLERK_SECRET_KEY: '${{ secrets.CLERK_SECRET_KEY }}'" >> variables.yml
+      #     echo "  NEXT_PUBLIC_CLERK_SIGN_IN_URL: '${{ secrets.NEXT_PUBLIC_CLERK_SIGN_IN_URL }}'" >> variables.yml
+      #     echo "  NEXT_PUBLIC_CLERK_SIGN_UP_URL: '${{ secrets.NEXT_PUBLIC_CLERK_SIGN_UP_URL }}'" >> variables.yml
+      #     echo "  NEXT_PUBLIC_STREAM_API_KEY: '${{ secrets.NEXT_PUBLIC_STREAM_API_KEY }}'" >> variables.yml
+      #     echo "  STREAM_SECRET_KEY: '${{ secrets.STREAM_SECRET_KEY }}'" >> variables.yml
+      #   shell: bash
+        
+
+
 
       - name: Run Ansible Playbook
         shell: bash
@@ -166,3 +190,4 @@ jobs:
           LB_DNS: ${{ env.LB_DNS }}
         run: |
           ansible-playbook -i inventory.ini ansible/playbook.yml
+      
