@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, 9-https ]
+    branches: [ main, 15-avatars ]
   pull_request:
     branches: [ main ]
 
