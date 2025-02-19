@@ -168,7 +168,7 @@ output "public_ip" {
 }
 
 
-# HTTP Listener that redirects to HTTPS
+# HTTP Listener, перенаправляющий на HTTPS
 resource "aws_lb_listener" "http_listener" {
   load_balancer_arn = aws_lb.app_lb.arn
   port              = "80"
@@ -184,22 +184,33 @@ resource "aws_lb_listener" "http_listener" {
     }
   }
 }
+# Создание Application Load Balancer
+resource "aws_lb" "app_lb" {
+  name               = "c-a-app-lb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.lb_sg.id]
+  subnets            = [aws_subnet.public.id, aws_subnet.public_2.id]
+
+  tags = {
+    Name = "c-a-app-lb"
+  }
+}
 
 
-#Https
+#Https# HTTPS Listener для Load Balancer
 resource "aws_lb_listener" "https_listener" {
   load_balancer_arn = aws_lb.app_lb.arn
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-2016-08"
-  certificate_arn   = var.acm_certificate_arn  # Используем переменную
+  certificate_arn   = var.acm_certificate_arn  # Предполагается, что вы передаете ARN сертификата через переменную
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.app_tg.arn  # Убедитесь, что имя целевой группы правильное
+    target_group_arn = aws_lb_target_group.app_tg.arn
   }
 }
-
 # resource "aws_lb_listener" "http_listener" {
 #   load_balancer_arn = aws_lb.this.arn
 #   port              = "80"
@@ -267,6 +278,32 @@ resource "aws_launch_template" "app_lt" {
       Name = "c-a-app-instance"
     }
   }
+}
+# Создание Target Group для EC2 инстанса
+resource "aws_lb_target_group" "app_tg" {
+  name     = "c-a-app-tg"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.main.id
+
+  health_check {
+    path                = "/"
+    protocol            = "HTTP"
+    matcher             = "200"
+    interval            = 30
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+  }
+
+  tags = {
+    Name = "c-a-app-tg"
+  }
+}
+# Присоединение EC2 инстанса к Target Group
+resource "aws_lb_target_group_attachment" "app" {
+  target_group_arn = aws_lb_target_group.app_tg.arn
+  target_id        = aws_instance.app.id
+  port             = 80
 }
 
 # Auto Scaling Group with desired capacity of 3 instances
