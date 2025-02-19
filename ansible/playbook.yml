@@ -84,8 +84,8 @@
     - name: Append NEXT_PUBLIC_BASE_URL to .env file
       lineinfile:
         path: "/home/ec2-user/.env"
-        line: "NEXT_PUBLIC_BASE_URL={{ lb_dns }}" 
-        # line: "NEXT_PUBLIC_BASE_URL=https://medicall.cfd"
+        # line: "NEXT_PUBLIC_BASE_URL={{ lb_dns }}" 
+        line: "NEXT_PUBLIC_BASE_URL=https://macht.top"
         # https 
         create: yes
       when: ansible_os_family is defined

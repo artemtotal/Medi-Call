@@ -97,7 +97,7 @@ resource "aws_route_table_association" "public_assoc_2" {
   subnet_id      = aws_subnet.public_2.id
   route_table_id = aws_route_table.public_rt.id
 }
-# Security Group for the Load Balancer
+# Обновленная группа безопасности для Load Balancer
 resource "aws_security_group" "lb_sg" {
   name   = "c-a-lb-sg"
   vpc_id = aws_vpc.main.id
@@ -110,6 +110,14 @@ resource "aws_security_group" "lb_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    description = "Allow HTTPS from anywhere"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     description = "Allow all outbound traffic"
     from_port   = 0
@@ -118,6 +126,7 @@ resource "aws_security_group" "lb_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+
 
 # Security Group for the EC2 instances
 resource "aws_security_group" "instance_sg" {
@@ -181,31 +190,37 @@ resource "aws_lb_target_group" "app_tg" {
 }
 
 
-# Create a Listener for the Load Balancer
-resource "aws_lb_listener" "app_listener" {
+# HTTP Listener that redirects to HTTPS
+resource "aws_lb_listener" "http_listener" {
   load_balancer_arn = aws_lb.app_lb.arn
   port              = "80"
   protocol          = "HTTP"
 
   default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.app_tg.arn
+    type = "redirect"
+
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
   }
 }
 
-#Https
-# resource "aws_lb_listener" "https_listener" {
-#   load_balancer_arn = aws_lb.this.arn
-#   port              = "443"
-#   protocol          = "HTTPS"
-#   ssl_policy        = "ELBSecurityPolicy-2016-08"
-#   certificate_arn   = aws_acm_certificate.cert.arn
 
-#   default_action {
-#     type             = "forward"
-#     target_group_arn = aws_lb_target_group.my_app_tg.arn
-#   }
-# }
+#Https
+resource "aws_lb_listener" "https_listener" {
+  load_balancer_arn = aws_lb.app_lb.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = var.acm_certificate_arn  # Используем переменную
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.app_tg.arn  # Убедитесь, что имя целевой группы правильное
+  }
+}
 
 # resource "aws_lb_listener" "http_listener" {
 #   load_balancer_arn = aws_lb.this.arn
@@ -222,8 +237,23 @@ resource "aws_lb_listener" "app_listener" {
 #     }
 #   }
 # }
+# resource "aws_acm_certificate" "cert" {
+#   domain_name       = "macht.top"  # Замените на ваш домен
+#   validation_method = "DNS"
 
+#   lifecycle {
+#     create_before_destroy = true
+#   }
 
+#   tags = {
+#     Name = "medicall-cfd-cert"
+#   }
+# }
+
+# variable "acm_certificate_arn" {
+#   description = "ARN of the AWS ACM certificate"
+#   type        = string
+# }
 # Launch Template for application instances
 resource "aws_launch_template" "app_lt" {
   name_prefix   = "c-a-app-lt-"

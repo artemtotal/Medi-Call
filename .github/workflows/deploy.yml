@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, origin/7-cant-create-schedule-meeting, 7-cant-create-schedule-meeting ]
+    branches: [ main, 9-https ]
   pull_request:
     branches: [ main ]
 
@@ -80,11 +80,13 @@ jobs:
 
       - name: Terraform Plan
         working-directory: infra
-        run: terraform plan -out=plan.tfplan
+        run: terraform plan -var "acm_certificate_arn=arn:aws:acm:eu-central-1:345594593042:certificate/bc7393f9-5324-49c7-8f5f-74c1a5cfe42a" -out=plan.tfplan
+
 
       - name: Terraform Apply
         working-directory: infra
         run: terraform apply -auto-approve plan.tfplan
+      
 
       - name: Terraform Output (JSON)
         id: tf_output
