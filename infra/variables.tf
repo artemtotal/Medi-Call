@@ -42,3 +42,7 @@ variable "key_pair_name" {
 #   default = "H/jbQj+QH1byS39GOkcA5ZVDfxvC7BiLXDjVvBnR"
 # }
 
+variable "acm_certificate_arn" {
+  description = "ARN of the AWS ACM certificate"
+  type        = string
+}

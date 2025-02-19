@@ -210,15 +210,15 @@ resource "aws_lb_listener" "http_listener" {
 
 #Https
 resource "aws_lb_listener" "https_listener" {
-  load_balancer_arn = aws_lb.this.arn
+  load_balancer_arn = aws_lb.app_lb.arn
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-2016-08"
-  certificate_arn   = aws_acm_certificate.cert.arn
+  certificate_arn   = var.acm_certificate_arn  # Используем переменную
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.my_app_tg.arn
+    target_group_arn = aws_lb_target_group.app_tg.arn  # Убедитесь, что имя целевой группы правильное
   }
 }
 
