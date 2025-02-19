@@ -206,10 +206,10 @@ resource "aws_lb_target_group" "app_tg" {
   vpc_id   = aws_vpc.main.id
 
   health_check {
-    path                = "/"
+    path                = "api/health"
     protocol            = "HTTP"
     matcher             = "200"
-    interval            = 30
+    interval            = 60
     healthy_threshold   = 2
     unhealthy_threshold = 2
   }
@@ -242,7 +242,7 @@ resource "aws_autoscaling_group" "app_asg" {
 
   # Optional health check configuration
   health_check_type         = "ELB"
-  health_check_grace_period = 300
+  health_check_grace_period = 500
 
   lifecycle {
     create_before_destroy = true
