@@ -2,11 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-<<<<<<< HEAD
-    branches: [ main, origin/7-cant-create-schedule-meeting, 7-cant-create-schedule-meeting ]
-=======
-    branches: [ main, 10-https-zu-http-ändern ]
->>>>>>> e8115e31f44457ad541b3f27fd4aeaf1bf5922fb
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -80,11 +76,13 @@ jobs:
 
       - name: Terraform Plan
         working-directory: infra
-        run: terraform plan -out=plan.tfplan
+        run: terraform plan -var "acm_certificate_arn=arn:aws:acm:eu-central-1:345594593042:certificate/bc7393f9-5324-49c7-8f5f-74c1a5cfe42a" -out=plan.tfplan
+
 
       - name: Terraform Apply
         working-directory: infra
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve plan.tfplan
+      
 
       - name: Terraform Output (JSON)
         id: tf_output
@@ -120,9 +118,7 @@ jobs:
           echo "ENV_FILE<<EOF" >> $GITHUB_ENV
           echo "${{ secrets.MY_DOTENV_CONTENTS }}" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-<<<<<<< HEAD
-        
-        
+     
 
       - name: Extract Load Balancer DNS
         run: |
@@ -133,22 +129,7 @@ jobs:
 
       - name: Debug LB_DNS
         run: echo "LB_DNS=${{ env.LB_DNS }}"
-
-
-          
-=======
-
-      - name: Extract instance public IP
-        run: |
-          PUBLIC_IP=$(jq -r '.public_ip.value' tf_outputs.json)
-          echo "PUBLIC_IP=${PUBLIC_IP}"
-          echo "PUBLIC_IP=${PUBLIC_IP}" >> $GITHUB_ENV
-        shell: bash
-
-      - name: Debug PUBLIC_IP
-        run: echo "PUBLIC_IP=${{ env.PUBLIC_IP }}"
-
->>>>>>> e8115e31f44457ad541b3f27fd4aeaf1bf5922fb
+        
       - name: Show tf_outputs.json (debug)
         run: cat tf_outputs.json
 
@@ -197,9 +178,7 @@ jobs:
       #   shell: bash
         
 
-      - name: Echo PUBLIC_IP before Ansible
-        run: |
-            echo "PUBLIC_IP is: ${{ env.PUBLIC_IP }}"
+
 
       - name: Run Ansible Playbook
         shell: bash
@@ -208,15 +187,7 @@ jobs:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
           ENV_FILE: ${{ env.ENV_FILE }}
-<<<<<<< HEAD
           LB_DNS: ${{ env.LB_DNS }}
         run: |
           ansible-playbook -i inventory.ini ansible/playbook.yml
       
-
-=======
-          # Используем PUBLIC_IP для формирования базового URL с протоколом http
-          LB_DNS: "http://${{ env.PUBLIC_IP }}"
-        run: |
-          ansible-playbook -i inventory.ini ansible/playbook.yml
->>>>>>> e8115e31f44457ad541b3f27fd4aeaf1bf5922fb
