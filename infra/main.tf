@@ -250,10 +250,10 @@ resource "aws_lb_listener" "https_listener" {
 #   }
 # }
 
-variable "acm_certificate_arn" {
-  description = "ARN of the AWS ACM certificate"
-  type        = string
-}
+# variable "acm_certificate_arn" {
+#   description = "ARN of the AWS ACM certificate"
+#   type        = string
+# }
 # Launch Template for application instances
 resource "aws_launch_template" "app_lt" {
   name_prefix   = "c-a-app-lt-"
