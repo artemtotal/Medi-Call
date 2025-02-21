@@ -50,8 +50,6 @@ export const useGetCalls = () => {
     return startsAt && new Date(startsAt) > now
   });
 
-  // **Hier holen wir das nächste Meeting**
-  const nextMeeting =upcomingCalls?.length ? upcomingCalls[0] : null;
 
-  return { endedCalls, upcomingCalls, callRecordings: calls, nextMeeting, isLoading }
+  return { endedCalls, upcomingCalls, callRecordings: calls, isLoading }
 };
