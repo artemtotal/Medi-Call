@@ -2,7 +2,7 @@
  "use client";  
 
 import MeetingTypeList from '@/components/MeetingTypeList';
-import { useGetCalls } from '@/hooks/useGetCalls';
+
 
 const Home = () => {
   const now = new Date();
