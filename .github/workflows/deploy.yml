@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, 15-avatars-clean ]
+    branches: [ main, live-chat-on-ec2 ]
   pull_request:
     branches: [ main ]
 
