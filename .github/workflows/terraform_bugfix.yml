@@ -71,11 +71,11 @@ jobs:
 
       - name: Terraform Init
         working-directory: infra
-        run: terraform init
+        run: terraform init -reconfigure
       
-      - name: Terraform lockid destroy
-        working-directory: infra
-        run: terraform force-unlock -force "my-terraform-state-bucket-c-a/projects/c-a/terraform.tfstate"
+      # - name: Terraform lockid destroy
+      #   working-directory: infra
+      #   run: terraform force-unlock -force "my-terraform-state-bucket-c-a/projects/c-a/terraform.tfstate"
 
 
       - name: Terraform Plan
