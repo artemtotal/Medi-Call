@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, live-chat-on-ec2 ]
+    branches: [  ]
   pull_request:
     branches: [ main ]
 
@@ -71,7 +71,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: infra
-        run: terraform init -reconfigure
+        run: terraform init
       
       # - name: Terraform lockid destroy
       #   working-directory: infra
