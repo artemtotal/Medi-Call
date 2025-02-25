@@ -30,3 +30,5 @@ jobs:
       - name: Terraform Destroy
         working-directory: infra
         run: terraform destroy -auto-approve
+        env:
+          TF_VAR_acm_certificate_arn: arn:aws:acm:eu-central-1:345594593042:certificate/bc7393f9-5324-49c7-8f5f-74c1a5cfe42a
