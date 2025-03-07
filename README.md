@@ -1,7 +1,7 @@
 <div align="center">
   <br />
     <a href="https://Macht.top" target="_blank">
-      <img src="/mnt/data/Medi-Call.png" alt="Medi-Call Banner">
+      <img src="/Code/public/icons/logo.svg" alt="Medi-Call Banner">
     </a>
   <br />
 
@@ -83,7 +83,7 @@ ansible-playbook -i inventory/hosts deploy.yml
 ![GitHub Actions & AWS](Code/public/images/Screenshot_169.png)
 
 ### 2. Menü Autorisierung mit Clerk
-![Clerk Login](Code/public/images/Medi-Call (3).png)
+![Clerk Login](Code/public/images/Medi-Call1.png)
 
 ### 3. Videoanruf in Medi-Call
 ![Video Call](Code/public/images/Screenshot_168.png)
