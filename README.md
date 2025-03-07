@@ -29,7 +29,7 @@
 ## 🤖 Einführung
 Medi-Call ist eine digitale Plattform, die Patienten und Ärzte über Video-Calls verbindet. Patienten erhalten schnelle ärztliche Beratung, ohne das Haus zu verlassen, während Ärzte effizienter arbeiten und ihre Patienten flexibel betreuen können.
 
-🔗 **Website:** [Medi-Call](https://Macht.top)
+🔗 **Website:** [Medi-Call](https://Macht.top) *(Derzeit nicht aktiv, um Kosten zu sparen.)*
 
 ## ⚙️ Technologie-Stack
 - **Frontend:** Next.js / React / Tailwind CSS
