@@ -1,7 +1,7 @@
 <div align="center">
   <br />
     <a href="https://Macht.top" target="_blank">
-      <img src="/mnt/data/Medi-Call.png" alt="Medi-Call Banner">
+      <img src="/Code/public/icons/logo.svg" alt="Medi-Call Banner">
     </a>
   <br />
 
