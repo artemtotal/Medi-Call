@@ -1,7 +1,7 @@
 <div align="center">
   <br />
     <a href="https://Macht.top" target="_blank">
-      <img src="/Code/public/icons/logo.svg" alt="Medi-Call Banner">
+      <img src="/mnt/data/Medi-Call.png" alt="Medi-Call Banner">
     </a>
   <br />
 
@@ -23,7 +23,8 @@
 2. ⚙️ [Technologie-Stack](#tech-stack)
 3. 🔋 [Funktionen](#funktionen)
 4. 🤸 [Schnellstart](#schnellstart)
-5. 🚀 [Weitere Infos](#mehr)
+5. 📷 [Screenshots](#screenshots)
+6. 🚀 [Weitere Infos](#mehr)
 
 ## 🤖 Einführung
 Medi-Call ist eine digitale Plattform, die Patienten und Ärzte über Video-Calls verbindet. Patienten erhalten schnelle ärztliche Beratung, ohne das Haus zu verlassen, während Ärzte effizienter arbeiten und ihre Patienten flexibel betreuen können.
@@ -76,6 +77,16 @@ terraform apply
 # Ansible Playbook für Serverkonfiguration ausführen
 ansible-playbook -i inventory/hosts deploy.yml
 ```
+
+## 📷 Screenshots
+### 1. GitHub Actions & AWS Load Balancer
+![GitHub Actions & AWS](Code/public/images/Screenshot_169.png)
+
+### 2. Menü Autorisierung mit Clerk
+![Clerk Login](Code/public/images/Medi-Call (3).png)
+
+### 3. Videoanruf in Medi-Call
+![Video Call](Code/public/images/Screenshot_168.png)
 
 ## 🚀 Weitere Infos
 **Medi-Call – Die Zukunft der Telemedizin!** 🚀
